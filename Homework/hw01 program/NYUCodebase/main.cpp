@@ -2,7 +2,10 @@
 Victor Zheng
 vz365
 hw01
+quesitons&concerns
 untextured?
+why translate and then rotate?
+how to stop untextured polygon from retaining the movement of the previous image in the loop
 */
 
 #ifdef _WINDOWS
@@ -48,11 +51,6 @@ GLuint LoadTexture(const char *filePath) {
 int main(int argc, char *argv[])
 {
 
-	//glClearColor(0.4f, 0.2f, 0.4f, 1.0f); //setting clear color of the screen
-	//glClear(GL_COLOR_BUFFER_BIT); //clear the screen with the above set clear value
-	
-
-
 	SDL_Init(SDL_INIT_VIDEO);
 	displayWindow = SDL_CreateWindow("My Game", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640*2, 360*2, SDL_WINDOW_OPENGL); //16:9 display window ratio
 	SDL_GLContext context = SDL_GL_CreateContext(displayWindow);
@@ -68,8 +66,10 @@ int main(int argc, char *argv[])
 		//program.SetColor(0.2f, 0.8f, 0.4f, 1.0f); //color of rednered polygon
 		
 		Matrix projectionMatrix;
-		projectionMatrix.SetOrthoProjection(-3.55, 3.55, -2.0f, 2.0f, -1.0f, 1.0f);
+		//projectionMatrix.SetOrthoProjection(-3.55, 3.55, -2.0f, 2.0f, -1.0f, 1.0f); //left,right,bottom,top max bounds in OpenGL units (rather than pixels)
+		projectionMatrix.SetOrthoProjection(-3.55*2, 3.55*2, -2.0f*2, 2.0f*2, -1.0f*2, 1.0f*2);
 		//Matrix modelMatrix;
+		Matrix triangleModelMatrix;
 		Matrix snailModelMatrix;
 		Matrix snail2ModelMatrix;
 		Matrix alienYModelMatrix;
@@ -80,8 +80,8 @@ int main(int argc, char *argv[])
 		GLuint alienYTexture = LoadTexture(RESOURCE_FOLDER"alienYellow.png");
 
 		float lastFrameTicks = 0.0f;
-
-
+		float angle = 0.0f;
+		float dist = 0.0f;
 
 		
 
@@ -93,20 +93,47 @@ int main(int argc, char *argv[])
 				done = true;
 			}
 		}
-		glClear(GL_COLOR_BUFFER_BIT);
+
+		glClearColor(0.4f, 0.2f, 0.8f, 0.5f);
+		//glClearColor(0.4f, 0.2f, 0.4f, 1.0f); //setting clear color of the screen
+		glClear(GL_COLOR_BUFFER_BIT); //clear the screen with the above set clear value
+		
 
 		glUseProgram(program.programID);
-		program.SetModelMatrix(snailModelMatrix);
-		program.SetModelMatrix(snail2ModelMatrix);
-		program.SetModelMatrix(alienYModelMatrix);
+
 		program.SetProjectionMatrix(projectionMatrix);
 		program.SetViewMatrix(viewMatrix);
 
+		float ticks = (float)SDL_GetTicks() / 1000.0f;
+		float elapsed = ticks - lastFrameTicks;
+		lastFrameTicks = ticks;
+		angle += elapsed*360.0f*(3.1415926/180.0f); //angle is 360deg per sec converted into rad = pi rad per sec
+		dist += elapsed;
+
+		program.SetColor(0.2f, 0.8f, 0.4f, 1.0f); //color of rednered polygon
+		/* Draw untextured triangle polygon */
+		float triangleVertices[] = { 2.0,2.0, 3.0,2.0, 3.0,3.0 };
+		//float triangleVertices[] = { 2.0,2.0, 3.0,2.0, 3.0,3.0 ,2.0,2.0,3.0,3.0,2.0,3.0};
+		glVertexAttribPointer(program.positionAttribute, 2, GL_FLOAT, false, 0, triangleVertices);
+		glEnableVertexAttribArray(program.positionAttribute);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		glDisableVertexAttribArray(program.positionAttribute);
+		/* Draw untextured triangle polygon */
+
+		/* Draw snail */
+		snailModelMatrix.Identity(); //everytime game goes through loop, the snail is reset to original position (unless there's time elapsed involved)
+		snailModelMatrix.Translate(-2.0f, 0.0f, 0.0f); //start 2 units to the left of center
+		snailModelMatrix.Translate(dist, 0.0f, 0.0f);
+		snailModelMatrix.Rotate(angle);
 		
-		//snailModelMatrix.Identity(); //create snail
+		//snailModelMatrix.Rotate(45.0f * (3.1415926f / 180.0f));
+		//snailModelMatrix.Rotate(45.0f * (3.1415926f / 180.0f)); //order matters!
+		//snailModelMatrix.Translate(-2.0f, 0.0f, 0.0f); //translate to the left by 2 units
+		
+		program.SetModelMatrix(snailModelMatrix); //commits the identity & translation of matrix
 		glBindTexture(GL_TEXTURE_2D, snailTexture);
-		//float snailVertices[] = { -0.5, -0.5, 0.5, -0.5, 0.5, 0.5, -0.5, -0.5, 0.5, 0.5, -0.5, 0.5 };
-		float snailVertices[] = { -2.0,-0.5,-1.0,-0.5,-1.0,0.5,-2.0,-0.5,-1.0,0.5,-2.0,0.5};
+		float snailVertices[] = { -0.5, -0.5, 0.5, -0.5, 0.5, 0.5, -0.5, -0.5, 0.5, 0.5, -0.5, 0.5 };
+		//float snailVertices[] = { -2.0,-0.5,-1.0,-0.5,-1.0,0.5,-2.0,-0.5,-1.0,0.5,-2.0,0.5}; //don't do this b/c you're going to rotate relative to the origin of the modelMatrix
 		glVertexAttribPointer(program.positionAttribute, 2, GL_FLOAT, false, 0, snailVertices);
 		glEnableVertexAttribArray(program.positionAttribute);
 
@@ -115,23 +142,22 @@ int main(int argc, char *argv[])
 		glVertexAttribPointer(program.texCoordAttribute, 2, GL_FLOAT, false, 0, snailTexCoords);
 		glEnableVertexAttribArray(program.texCoordAttribute);
 
-		glDrawArrays(GL_TRIANGLES, 0, 6);
+		glDrawArrays(GL_TRIANGLES, 0, 6); //writes to the screen (so set everything before this)
 		glDisableVertexAttribArray(program.positionAttribute);
-		glDisableVertexAttribArray(program.positionAttribute);
+		glDisableVertexAttribArray(program.texCoordAttribute);
+		/* Draw Snail */
 
-
-
-	/*	float ticks = (float)SDL_GetTicks() / 1000.0f;
-		float elapsed = ticks - lastFrameTicks;
-		lastFrameTicks = ticks;
-		float angle = 0;
-		angle += elapsed;*/
-
-		//snailModelMatrix.Rotate( 45.0f * (3.1415926f / 180.0f)); //doesn't work ever since I changed modelMatrix --> snailModelMartrix
+		/*
+		snailModelMatrix.Rotate( 45.0f * (3.1415926f / 180.0f));
 		//snailModelMatrix.Translate(2.0f, 0.0f, 0.0f);
+		program.SetModelMatrix(snailModelMatrix);
+		*/ //This won't register because it's placed after the glDrawArrays function, so it's not written
 
+		/* Draw snail2 */
+		snail2ModelMatrix.Identity(); //start at center
+		snail2ModelMatrix.Translate(dist/1.5f, 0.0f, 0.0f); //move right based on time
+		program.SetModelMatrix(snail2ModelMatrix); 
 
-		//snail2ModelMatrix.Identity(); //create snail2
 		glBindTexture(GL_TEXTURE_2D, snail2Texture);
 		float snail2Vertices[] = { -0.5, -0.5, 0.5, -0.5, 0.5, 0.5, -0.5, -0.5, 0.5, 0.5, -0.5, 0.5 };
 		glVertexAttribPointer(program.positionAttribute, 2, GL_FLOAT, false, 0, snail2Vertices);
@@ -143,11 +169,18 @@ int main(int argc, char *argv[])
 
 		glDrawArrays(GL_TRIANGLES, 0, 6);
 		glDisableVertexAttribArray(program.positionAttribute);
-		glDisableVertexAttribArray(program.positionAttribute);
+		glDisableVertexAttribArray(program.texCoordAttribute);
+		/* Draw snail2 */
 
-		//alienYModelMatrix.Identity(); //create alienY
+		/* Draw alienY */
+		alienYModelMatrix.Identity();
+		alienYModelMatrix.Translate(0.0f, -2.0f, 0.0f); //start 2 units below center
+		alienYModelMatrix.Rotate(angle);
+		alienYModelMatrix.Translate(dist, 0.0f, 0.0f);
+		program.SetModelMatrix(alienYModelMatrix);
 		glBindTexture(GL_TEXTURE_2D, alienYTexture);
-		float alienYVertices[] = { -0.5, -2.0, 0.5, -2.0, 0.5, -1.0, -0.5, -2.0, 0.5, -1.0, -0.5, -1.0 };
+		//float alienYVertices[] = { -0.5, -2.0, 0.5, -2.0, 0.5, -1.0, -0.5, -2.0, 0.5, -1.0, -0.5, -1.0 };
+		float alienYVertices[] = { -0.5, -0.5, 0.5, -0.5, 0.5, 0.5, -0.5, -0.5, 0.5, 0.5, -0.5, 0.5 };
 		glVertexAttribPointer(program.positionAttribute, 2, GL_FLOAT, false, 0, alienYVertices);
 		glEnableVertexAttribArray(program.positionAttribute);
 
@@ -157,10 +190,15 @@ int main(int argc, char *argv[])
 
 		glDrawArrays(GL_TRIANGLES, 0, 6);
 		glDisableVertexAttribArray(program.positionAttribute);
-		glDisableVertexAttribArray(program.positionAttribute);
+		glDisableVertexAttribArray(program.texCoordAttribute);
+		/* Draw alienY */
+
+		
+		//done drawing out the images
+
 
 		SDL_GL_SwapWindow(displayWindow);
-		snailModelMatrix.Rotate(45.0f * (3.1415926f / 180.0f));
+		
 
 		//glClear(GL_COLOR_BUFFER_BIT); //clears out the snail&alien
 		//SDL_GL_SwapWindow(displayWindow);

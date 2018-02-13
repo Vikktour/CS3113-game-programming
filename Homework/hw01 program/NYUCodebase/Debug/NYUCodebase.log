@@ -1,3 +1,4 @@
 ﻿  main.cpp
-c:\users\victo\desktop\intro to game programming cs3113\hw01\hw01 program\nyucodebase\main.cpp(71): warning C4305: 'argument': truncation from 'double' to 'float'
+c:\users\victo\desktop\intro to game programming cs3113\hw01\hw01 program\nyucodebase\main.cpp(70): warning C4305: 'argument': truncation from 'double' to 'float'
+c:\users\victo\desktop\intro to game programming cs3113\hw01\hw01 program\nyucodebase\main.cpp(110): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
   NYUCodebase.vcxproj -> C:\Users\victo\Desktop\Intro to game programming CS3113\hw01\hw01 program\Debug\NYUCodebase.exe
