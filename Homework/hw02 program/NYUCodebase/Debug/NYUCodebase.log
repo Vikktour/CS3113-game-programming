@@ -1,0 +1,8 @@
+﻿  main.cpp
+c:\users\victo\desktop\intro to game programming cs3113\homework\hw02\hw02 program\nyucodebase\main.cpp(237): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+c:\users\victo\desktop\intro to game programming cs3113\homework\hw02\hw02 program\nyucodebase\main.cpp(250): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+c:\users\victo\desktop\intro to game programming cs3113\homework\hw02\hw02 program\nyucodebase\main.cpp(265): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+c:\users\victo\desktop\intro to game programming cs3113\homework\hw02\hw02 program\nyucodebase\main.cpp(273): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+c:\users\victo\desktop\intro to game programming cs3113\homework\hw02\hw02 program\nyucodebase\main.cpp(285): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+c:\users\victo\desktop\intro to game programming cs3113\homework\hw02\hw02 program\nyucodebase\main.cpp(294): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+  NYUCodebase.vcxproj -> C:\Users\victo\Desktop\Intro to game programming CS3113\Homework\hw02\hw02 program\Debug\NYUCodebase.exe
