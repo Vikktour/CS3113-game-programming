@@ -332,16 +332,17 @@ void UpdateGame(GameState &game, float elapsed) {
 		//float yRowGap = 1.0f / yRowGapRatio;
 		//float yRowGap = 0.5f;
 		float enemyAspect = game.enemies[0].sprite.width / game.enemies[0].sprite.height;
-		float halfEnemySprite = enemyAspect* game.enemies[0].sprite.size / 2.0f;
+		float halfEnemyWidth = enemyAspect* game.enemies[0].sprite.size / 2.0f;//half of horizontal sprite length
+		float halfEnemyHeight = game.enemies[0].sprite.size / 2.0f;//half of vertical sprite length
 		for (int i = 0; i < lastInRow; i++) {//check each row for collision with left/right side of screen
-			if (game.enemies[i + (cycle*enemiesPerRow)].position.x - halfEnemySprite <= leftScreen) {//if leftmost visible enemy hits left wall, then the row moves right	
+			if (game.enemies[i + (cycle*enemiesPerRow)].position.x - halfEnemyWidth <= leftScreen) {//if leftmost visible enemy hits left wall, then the row moves right	
 				for (int j = i; j < lastInRow; j++) {
 					game.enemies[j + (cycle*enemiesPerRow)].velocity.x = enemySpeed;
 					//game.enemies[j + (cycle*enemiesPerRow)].position.y -= yRowGap;
 				}
 				enemyCollideWall = 1;
 			}
-			else if (game.enemies[i + (cycle*enemiesPerRow)].position.x + halfEnemySprite >= rightScreen) {//if enemy hits right wall, move left
+			else if (game.enemies[i + (cycle*enemiesPerRow)].position.x + halfEnemyWidth >= rightScreen) {//if enemy hits right wall, move left
 				for (int j = i; j >= 0; j--) {
 					game.enemies[j + (cycle*enemiesPerRow)].velocity.x = -enemySpeed;
 					//game.enemies[j + (cycle*enemiesPerRow)].position.y -= yRowGap;
@@ -393,19 +394,39 @@ void UpdateGame(GameState &game, float elapsed) {
 		//update enemy bullets
 		enemyShoot(game, elapsed);
 
-		float bulletAspect = game.enemyBullets[0].sprite.width / game.enemyBullets[0].sprite.height;
-		float halfBulletWidth = bulletAspect * game.enemyBullets[0].sprite.size / 2.0f;
-		float halfBulletHeight = game.enemyBullets[0].sprite.size / 2.0f;
+		float enemyBulletAspect = game.enemyBullets[0].sprite.width / game.enemyBullets[0].sprite.height;
+		float halfEnemyBulletW = enemyBulletAspect * game.enemyBullets[0].sprite.size / 2.0f;
+		float halfEnemyBulletH = game.enemyBullets[0].sprite.size / 2.0f;
 		//enemy bullet hits player, move the bullets
 		for (int i = 0; i < MAX_BULLETS; i++) {
-			if (game.enemyBullets[i].position.y + halfBulletHeight >= playerBottom && game.enemyBullets[i].position.y - halfBulletHeight <= playerTop ) {//bulletback >= playerbottom and bullettip <= playertop
-				if (game.enemyBullets[i].position.x + halfBulletWidth >= playerLeft && game.enemyBullets[i].position.x - halfBulletWidth <= playerRight) {//bulletright >= playerleft, bulletleft <= playerright
+			if (game.enemyBullets[i].position.y + halfEnemyBulletH >= playerBottom && game.enemyBullets[i].position.y - halfEnemyBulletH <= playerTop ) {//bulletback >= playerbottom and bullettip <= playertop
+				if (game.enemyBullets[i].position.x + halfEnemyBulletW >= playerLeft && game.enemyBullets[i].position.x - halfEnemyBulletW <= playerRight) {//bulletright >= playerleft, bulletleft <= playerright
 					game.lives -= 1;
 					game.enemyBullets[i].position.x = -2000.0f;
 					game.enemyBullets[i].velocity.y = 0.0f;
 				}
 			}
 		}
+
+		float playerBulletAspect = game.bullets[0].sprite.width / game.bullets[0].sprite.height;
+		float halfPlayerBulletW = playerBulletAspect * game.bullets[0].sprite.size / 2.0f;
+		float halfPlayerBulletH = game.bullets[0].sprite.size / 2.0f;
+		//player bullet hits enemy, move the enemy off the screen
+		//for (int i = 0; i < MAX_BULLETS; i++) {
+		//	for (int j = 0; j < enemyCount; i++) {
+		//		if (game.bullets[i].position.y + halfPlayerBulletH >= game.enemies[j].position.y - halfEnemyHeight && game.bullets[i].position.y - halfPlayerBulletH <= game.enemies[j].position.y + halfEnemyHeight) {//bulletTip >= enemyBottom, bulletBottom <= enemyTop
+		//			if (game.bullets[i].position.x + halfPlayerBulletW >= game.enemies[j].position.x - halfEnemyWidth && game.bullets[i].position.x - halfPlayerBulletW <= game.enemies[j].position.x + halfEnemyWidth) {//bulletRight>=enemyLeft, bulletLeft<=enemyRight
+		//				game.enemies[j].position.y = - 10.0f;
+		//				game.enemies[j].velocity.x = 0.0f;
+		//			}
+		//		}
+		//	}
+		//}
+		int var = 20;
+		var = enemyCount-1;
+		game.enemies[var];//comeback
+		game.bullets[MAX_BULLETS - 1];
+
 	}
 
 }
@@ -480,11 +501,14 @@ public:
 	void ProcessInput() {//SDL_SCANCODE to switch states (e.g. menu to level)
 		if (keys[SDL_SCANCODE_SPACE]) {
 			mode = STATE_GAME_LEVEL; //switch from main menu to game level 1
-			//std::cout << mode << std::endl;
+			//InitializeGame();//comeback
 		}
 	}
 };
 
+void InitializeGame(GameState &game) {
+
+}
 
 class GameLevel {
 public:
