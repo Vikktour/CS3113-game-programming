@@ -49,10 +49,10 @@ float leftScreen = -aspectRatio * topScreen;
 float rightScreen = aspectRatio * topScreen;
 
 float lastFrameTicks = 0.0f;
-float playerSpeed = 1.5f; float playerBulletSpeed = 5.0f; int numLives = 1; //global variable so it's easier to adjust
+float playerSpeed = 1.5f; float playerBulletSpeed = 5.0f; int numLives = 3; //global variable so it's easier to adjust
 
 void DrawText(ShaderProgram *program, int fontTexture, std::string text, float size, float spacing);
-int enemyCount = 21; int enemiesPerRow = 5; float enemySpeed = 0.3f; float enemyBulletSpeed = 0.3f; float yRowGapRatio = 1.5f;
+int enemyCount = 15; int enemiesPerRow = 5; float enemySpeed = 0.3f; float enemyBulletSpeed = 0.3f; float yRowGapRatio = 1.5f;
 SDL_Window* displayWindow;
 const Uint8 *keys = SDL_GetKeyboardState(NULL);
 ShaderProgram texturedProgram;
@@ -411,21 +411,23 @@ void UpdateGame(GameState &game, float elapsed) {
 		float playerBulletAspect = game.bullets[0].sprite.width / game.bullets[0].sprite.height;
 		float halfPlayerBulletW = playerBulletAspect * game.bullets[0].sprite.size / 2.0f;
 		float halfPlayerBulletH = game.bullets[0].sprite.size / 2.0f;
-		//player bullet hits enemy, move the enemy off the screen
-		//for (int i = 0; i < MAX_BULLETS; i++) {
-		//	for (int j = 0; j < enemyCount; i++) {
-		//		if (game.bullets[i].position.y + halfPlayerBulletH >= game.enemies[j].position.y - halfEnemyHeight && game.bullets[i].position.y - halfPlayerBulletH <= game.enemies[j].position.y + halfEnemyHeight) {//bulletTip >= enemyBottom, bulletBottom <= enemyTop
-		//			if (game.bullets[i].position.x + halfPlayerBulletW >= game.enemies[j].position.x - halfEnemyWidth && game.bullets[i].position.x - halfPlayerBulletW <= game.enemies[j].position.x + halfEnemyWidth) {//bulletRight>=enemyLeft, bulletLeft<=enemyRight
-		//				game.enemies[j].position.y = - 10.0f;
-		//				game.enemies[j].velocity.x = 0.0f;
-		//			}
-		//		}
-		//	}
-		//}
-		int var = 20;
-		var = enemyCount-1;
-		game.enemies[var];//comeback
-		game.bullets[MAX_BULLETS - 1];
+		//player bullet hits enemy, move the enemy off the screen, update score
+		for (int i = 0; i < MAX_BULLETS; i++) {
+			for (int j = 0; j < enemyCount; j++) {
+				if (game.bullets[i].position.y + halfPlayerBulletH >= game.enemies[j].position.y - halfEnemyHeight && game.bullets[i].position.y - halfPlayerBulletH <= game.enemies[j].position.y + halfEnemyHeight) {//bulletTip >= enemyBottom, bulletBottom <= enemyTop
+					if (game.bullets[i].position.x + halfPlayerBulletW >= game.enemies[j].position.x - halfEnemyWidth && game.bullets[i].position.x - halfPlayerBulletW <= game.enemies[j].position.x + halfEnemyWidth) {//bulletRight>=enemyLeft, bulletLeft<=enemyRight
+						game.enemies[j].position.y = - 10.0f;
+						game.enemies[j].position.x = 0.0f;
+						game.enemies[j].velocity.x = 0.0f;
+						game.bullets[i].position.x = -2000.0f;
+						game.bullets[i].velocity.y = 0;
+						game.playerNoShoot = game.playerReloadTime;
+						game.score++;
+					}
+				}
+			}
+		}
+
 
 	}
 
