@@ -2,6 +2,8 @@
 Victor Zheng vz365
 hw03 Space Invaders
 Controls:
+up = shoot
+left,right
 
 questions and answers:
 1) Class entity has no member x i.e. bullets[bulletIndex].x = -1.2;
@@ -11,6 +13,10 @@ ans: .size() returns a size_t type, so make i of that type
 3) Does the screen resolution ratio have to be 16:9? Don't we want it to be more narrow?
 4) Why position += velocity * elapsed; instead of postion += velocity? ans: need velocity for 
 5) Why do we need to change position along with translating the model matrix? ans: the position is for where the player would shoot bullets, and the model matrix is where you see the plan's actual position
+6)Lives go to 0 and gameover to mainmenu, lives not resetting? Ans:
+
+7)Initialize game function? I still have to reset the enemy positions after gameover but this seems like a lot of work, especially when moving the things already set in main() to the initialize function; I need to convert everything.
+
 */
 
 
@@ -49,10 +55,10 @@ float leftScreen = -aspectRatio * topScreen;
 float rightScreen = aspectRatio * topScreen;
 
 float lastFrameTicks = 0.0f;
-float playerSpeed = 1.5f; float playerBulletSpeed = 5.0f; int numLives = 3; //global variable so it's easier to adjust
+float playerSpeed = 1.5f; float playerBulletSpeed = 5.0f; int numLives = 1; //global variable so it's easier to adjust
 
 void DrawText(ShaderProgram *program, int fontTexture, std::string text, float size, float spacing);
-int enemyCount = 15; int enemiesPerRow = 5; float enemySpeed = 0.3f; float enemyBulletSpeed = 0.3f; float yRowGapRatio = 1.5f;
+int enemyCount = 15; int enemiesPerRow = 5; float enemySpeed = 0.3f; float enemyBulletSpeed = 0.3f; float yRowGapRatio = 1.5f; float deadEnemyOffsetY = 10.0f;//where the dead enemy is located
 SDL_Window* displayWindow;
 const Uint8 *keys = SDL_GetKeyboardState(NULL);
 ShaderProgram texturedProgram;
@@ -135,31 +141,13 @@ public:
 	float z;
 };
 
-class Vector4 {//defines a 2D entity's 4 sides by uv units
-public:
-	Vector4() {}
-	Vector4(float left, float right, float top, float bottom) : left(left), right(right), top(top), bottom(bottom) {}
-	float left;
-	float right;
-	float bottom;
-	float top;
-	
-};
-
 class Entity { //object
 public:
 	Entity() {};
-	Entity(Vector3 position, Vector3 velocity, Vector3 size, Vector4 side, float rotation, SheetSprite sprite) : position(position), velocity(velocity), size(size), side(side), rotation(rotation), sprite(sprite) {}
+	Entity(Vector3 position, Vector3 velocity, Vector3 size, float rotation, SheetSprite sprite) : position(position), velocity(velocity), size(size), rotation(rotation), sprite(sprite) {}
 	Vector3 position;
 	Vector3 velocity;
 	Vector3 size;//<width,height,N/A>
-	Vector4 side;//defines the entity sides in terms of U,V units
-	void ConvertSide(float entityHeight, float entityWidth) {
-		side.left = position.x - entityWidth/2;
-		side.right = position.x + entityWidth / 2;
-		side.bottom = position.y - entityHeight / 2;
-		side.top = position.y + entityHeight / 2;
-	}
 	float rotation;
 	SheetSprite sprite;
 	//void Draw(ShaderProgram *program) {
@@ -416,7 +404,7 @@ void UpdateGame(GameState &game, float elapsed) {
 			for (int j = 0; j < enemyCount; j++) {
 				if (game.bullets[i].position.y + halfPlayerBulletH >= game.enemies[j].position.y - halfEnemyHeight && game.bullets[i].position.y - halfPlayerBulletH <= game.enemies[j].position.y + halfEnemyHeight) {//bulletTip >= enemyBottom, bulletBottom <= enemyTop
 					if (game.bullets[i].position.x + halfPlayerBulletW >= game.enemies[j].position.x - halfEnemyWidth && game.bullets[i].position.x - halfPlayerBulletW <= game.enemies[j].position.x + halfEnemyWidth) {//bulletRight>=enemyLeft, bulletLeft<=enemyRight
-						game.enemies[j].position.y = - 10.0f;
+						game.enemies[j].position.y = - deadEnemyOffsetY;
 						game.enemies[j].position.x = 0.0f;
 						game.enemies[j].velocity.x = 0.0f;
 						game.bullets[i].position.x = -2000.0f;
@@ -427,6 +415,8 @@ void UpdateGame(GameState &game, float elapsed) {
 				}
 			}
 		}
+
+		//if any enemy crosses the bottom screen then game over
 
 
 	}
@@ -514,19 +504,19 @@ void InitializeGame(GameState &game) {
 
 class GameLevel {
 public:
-	GameLevel(GameState& game):game(game) {}
-	GameState game;
+	GameLevel(GameState* game):game(game) {}
+	GameState* game;
 	void Render() {
-		RenderGame(game);
+		RenderGame(*game);//comebackreturn
 	}
 	void Update(float elapsed){
-		UpdateGame(game, elapsed);
-		if (game.lives == 0) {
+		UpdateGame(*game, elapsed);
+		if (game->lives == 0) {
 			mode = STATE_GAME_OVER;
 		}
 	}
 	void ProcessInput(float elapsed) {
-		ProcessGameInput(game, elapsed);
+		ProcessGameInput(*game, elapsed);
 	}
 };
 
@@ -556,7 +546,7 @@ public:
 	void ProcessInput() {
 		if (keys[SDL_SCANCODE_ESCAPE]) {
 			mode = STATE_MAIN_MENU;
-			game->lives = numLives;//comeback, the lives doesn't get reset to 1????
+			game->lives = numLives;
 		}
 	}
 };
@@ -564,8 +554,22 @@ public:
 //Render here has the same name as above???? Can I change the name? What are update/process input doing? Is there an efficient way to implement the functions instead of copy paste into diff classes?
 MainMenu mainMenu;
 GameState game;
-GameLevel Level(game);
+GameLevel Level(&game);
 GameOver Over(&game);
+
+void checkEnemyWin() {//if enemy wins in gamelevel then switch to gameover
+	float halfEnemyHeight = game.enemies[0].sprite.size / 2.0f;
+	float enemyAspect = game.enemies[0].sprite.width / game.enemies[0].sprite.height;
+	float halfEnemyWidth = enemyAspect * game.enemies[0].sprite.size / 2.0f;
+	for (int i = 0; i < enemyCount; i++) {
+		//if (game.enemies[i].position.y + halfEnemyHeight < bottomScreen) {
+		//	mode = STATE_GAME_OVER;
+		//}
+		if (game.enemies[i].position.y < bottomScreen && game.enemies[i].position.y > bottomScreen - deadEnemyOffsetY/2.0f) {
+			mode = STATE_GAME_OVER;
+		}
+	}
+}
 
 void Render() {//mode rendering (changes game state and draw the entities for that particular state)
 	switch (mode) {
@@ -594,6 +598,7 @@ void Update(float elapsed) {
 			//might want to pause game first then go to main menu
 			mode = STATE_MAIN_MENU;
 		}
+		checkEnemyWin();
 		break;
 	case STATE_GAME_OVER:
 		Over.Update(elapsed);
@@ -699,28 +704,28 @@ int main(int argc, char *argv[])
 
 	//(unsigned int textureID, float u, float v, float width, float height, float size)
 	//Level.game.player.sprite = SheetSprite(spaceTexture, 211.0f / pixelWidth, 941.0f / pixelHeight, 99.0f / pixelWidth, 75.0f / pixelHeight, 0.5f);
-	float playerWidth = Level.game.player.size.x = playerArray[2];//player width in uv size (0-1)
-	float playerHeight = Level.game.player.size.y = playerArray[3];//player height in uv size (0-1)
-	Level.game.player.sprite = SheetSprite(spaceTexture, playerArray[0], playerArray[1], playerWidth, playerHeight, 0.5f);//note that playerWidth,playerHeight are stored in sheetsprite class as width,height
-
+	float playerWidth = Level.game->player.size.x = playerArray[2];//player width in uv size (0-1)
+	float playerHeight = Level.game->player.size.y = playerArray[3];//player height in uv size (0-1)
+	Level.game->player.sprite = SheetSprite(spaceTexture, playerArray[0], playerArray[1], playerWidth, playerHeight, 0.5f);//note that playerWidth,playerHeight are stored in sheetsprite class as width,height
+	
 																			
-	Level.game.player.position.x = 0.0f;
-	Level.game.player.position.y = Level.game.playerYpos; //default -3.0f
+	Level.game->player.position.x = 0.0f;
+	Level.game->player.position.y = Level.game->playerYpos; //default -3.0f
 	/* Initialize player */
 
 
 	//initialize bullets out of view
 	for (int i = 0; i < MAX_BULLETS; i++) {
-		Level.game.bullets[i].position.x = -2000.0f;
-		Level.game.enemyBullets[i].position.x = -2000.0f;
+		Level.game->bullets[i].position.x = -2000.0f;
+		Level.game->enemyBullets[i].position.x = -2000.0f;
 	}
 	/* Choose bullet texture */
 	for (int i = 0; i < MAX_BULLETS; i++) {
 		//Level1.bullets[i].sprite = SheetSprite(spaceTexture, 776.0f / pixelWidth, 895.0f / pixelHeight, 34.0f / pixelWidth, 33.0f / pixelHeight, 0.5f); //powerup blue
 		//Level1.bullets[i].sprite = SheetSprite(spaceTexture, 811.0f / pixelWidth, 663.0f / pixelHeight, 16.0f / pixelWidth, 40.0f / pixelHeight, 0.5f); //fire09
 		//Level1.bullets[i].sprite = SheetSprite(spaceTexture, 211.0f / pixelWidth, 941.0f / pixelHeight, 99.0f / pixelWidth, 75.0f / pixelHeight, 0.5f); //hero, test to see if it's shooting multiple units on top of each other
-		Level.game.bullets[i].sprite = SheetSprite(spaceTexture, 829.0f / pixelWidth, 471.0f / pixelHeight, 14.0f / pixelWidth, 31.0f / pixelHeight, 0.5f); //fire15
-		Level.game.enemyBullets[i].sprite = SheetSprite(spaceTexture, 811.0f / pixelWidth, 663.0f / pixelHeight, 16.0f / pixelWidth, 40.0f / pixelHeight, 0.5f); //fire09
+		Level.game->bullets[i].sprite = SheetSprite(spaceTexture, 829.0f / pixelWidth, 471.0f / pixelHeight, 14.0f / pixelWidth, 31.0f / pixelHeight, 0.5f); //fire15
+		Level.game->enemyBullets[i].sprite = SheetSprite(spaceTexture, 811.0f / pixelWidth, 663.0f / pixelHeight, 16.0f / pixelWidth, 40.0f / pixelHeight, 0.5f); //fire09
 		//Level.game.enemyBullets[i].sprite = SheetSprite(spaceTexture, 211.0f / pixelWidth, 941.0f / pixelHeight, 99.0f / pixelWidth, 75.0f / pixelHeight, 0.5f);
 		//<SubTexture height = "31" width = "14" y = "471" x = "829" name = "fire15.png" / >
 	}
@@ -731,7 +736,7 @@ int main(int argc, char *argv[])
 	//* Initialize enemies *//
 
 	for (int i = 0; i < enemyCount; i++) {
-		Level.game.enemies[i].sprite = SheetSprite(spaceTexture, 518.0f / pixelWidth, 325.0f / pixelHeight, 84.0f / pixelHeight, 82.0f / pixelWidth, 0.5f); //<SubTexture height="84" width="82" y="325" x="518" name="enemyBlack4.png"/>
+		Level.game->enemies[i].sprite = SheetSprite(spaceTexture, 518.0f / pixelWidth, 325.0f / pixelHeight, 84.0f / pixelHeight, 82.0f / pixelWidth, 0.5f); //<SubTexture height="84" width="82" y="325" x="518" name="enemyBlack4.png"/>
 	}
 
 
@@ -759,8 +764,8 @@ int main(int argc, char *argv[])
 		}
 		numRows++;
 		for (int i = 0; i < tempCount; i++) {//put 5 enemies in each row
-			Level.game.enemies[i+(cycle*enemiesPerRow)].position.x = -2.0f + i;
-			Level.game.enemies[i+(cycle*enemiesPerRow)].position.y = numRows/yRowGapRatio - 1.0f; //note that dividing by 2 instead of 2.0f here made it round into a int rather than a float... which caused some rows to stack
+			Level.game->enemies[i+(cycle*enemiesPerRow)].position.x = -2.0f + i;
+			Level.game->enemies[i+(cycle*enemiesPerRow)].position.y = numRows/yRowGapRatio - 1.0f; //note that dividing by 2 instead of 2.0f here made it round into a int rather than a float... which caused some rows to stack
 		}
 		tempCount -= 5; cycle++;
 	}
@@ -768,7 +773,7 @@ int main(int argc, char *argv[])
 
 	//initialize enemy speed
 	for (int i = 0; i < enemyCount; i++) {
-		Level.game.enemies[i].velocity.x = enemySpeed;
+		Level.game->enemies[i].velocity.x = enemySpeed;
 	}
 
 	//* Initialize enemies *//
