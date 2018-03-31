@@ -1,0 +1,6 @@
+﻿  main_hw04.cpp
+c:\users\victo\desktop\intro to game programming cs3113\homework\hw04 - scrolling platformer demo\nyucodebase\nyucodebase\main_hw04.cpp(189): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
+c:\users\victo\desktop\intro to game programming cs3113\homework\hw04 - scrolling platformer demo\nyucodebase\nyucodebase\main_hw04.cpp(230): warning C4018: '<': signed/unsigned mismatch
+c:\users\victo\desktop\intro to game programming cs3113\homework\hw04 - scrolling platformer demo\nyucodebase\nyucodebase\main_hw04.cpp(260): warning C4244: 'argument': conversion from 'float' to 'int', possible loss of data
+c:\users\victo\desktop\intro to game programming cs3113\homework\hw04 - scrolling platformer demo\nyucodebase\nyucodebase\main_hw04.cpp(267): warning C4244: 'argument': conversion from 'float' to 'GLsizei', possible loss of data
+  NYUCodebase.vcxproj -> C:\Users\victo\Desktop\Intro to game programming CS3113\Homework\hw04 - Scrolling platformer demo\NYUCodebase\Debug\NYUCodebase.exe
