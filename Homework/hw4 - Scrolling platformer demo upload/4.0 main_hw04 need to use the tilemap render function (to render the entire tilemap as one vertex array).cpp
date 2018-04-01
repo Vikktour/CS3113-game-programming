@@ -39,20 +39,14 @@ questions and answers:
 //screen
 float screenWidth = 720;
 float screenHeight = 480;
-float topScreen = 7.0f;
-float bottomScreen = -7.0f;
+float topScreen = 100.0f;
+float bottomScreen = -100.0f;
 float aspectRatio = screenWidth / screenHeight;
 float leftScreen = -aspectRatio * topScreen;
 float rightScreen = aspectRatio * topScreen;
 
 //time and FPS
 float accumulator = 0.0f; float lastFrameTicks = 0.0f;
-
-//game
-float velocityMax = 3.0f;
-float tileSize = 1.0f;//tile size is how big you want each block to be in the world (e.g. our sprite is 16x16pixels in png, but we can make it 1.0x1.0 in world)
-FlareMap map;
-
 
 //more global variables
 ShaderProgram texturedProgram;
@@ -141,7 +135,7 @@ public:
 enum EntityType { ENTITY_PLAYER, ENTITY_ENEMY, ENTITY_COIN, ENTITY_POWERUP };
 class Entity {
 public:
-	Entity() : velocity(0.0f,0.0f,0.0f), acceleration(0.0f,0.0f,0.0f), friction(0.5f,0.0f,0.0f) {};
+	Entity() {};
 	void Update(float elapsed);
 	void Render(ShaderProgram* program);
 	bool CollidesWith(Entity *entity);
@@ -150,7 +144,6 @@ public:
 	Vector3 size;
 	Vector3 velocity;
 	Vector3 acceleration;
-	Vector3 friction;
 	bool isStatic;
 	EntityType entityType;
 	bool collidedTop;
@@ -163,39 +156,10 @@ public:
 void Entity::Update(float elapsed) {
 	velocity.x += acceleration.x * elapsed;
 	velocity.y += acceleration.y * elapsed;
-	//Set a speed limit
-	if (velocity.x > velocityMax) {
-		velocity.x = velocityMax;
-	}
-	else if (velocity.x < -velocityMax) {
-		velocity.x = -velocityMax;
-	}
-	if (velocity.y > velocityMax) {
-		velocity.y = velocityMax;
-	}
-	else if (velocity.y < -velocityMax) {
-		velocity.y = -velocityMax;
-	}
 	position.x += velocity.x * elapsed;
 	position.y += velocity.y * elapsed;
 
-	//friction if touching ground
-	if (velocity.y == 0 && acceleration.x == 0) {
-		velocity.x = lerp(velocity.x, 0.0f, elapsed * friction.x);
-		//velocity.y = lerp(velocity.y, 0.0f, elapsed * friction.y);
-	}
-
-	//gravity for dynamic entities
-	float gravity = -1.0f;
-	velocity.y += gravity * elapsed;
-
 }
-
-void worldToTileCoordinates(float worldX, float worldY, int *gridX, int *gridY) {//divide worldSize/tileSize = gridSize (i.e. which block number along x and y)
-	*gridX = (int)(worldX / tileSize);//note we're casting to int
-	*gridY = (int)(-worldY / tileSize);
-}
-
 void Entity::Render(ShaderProgram* program) {
 	Matrix modelMatrix;
 	modelMatrix.Identity();
@@ -218,12 +182,7 @@ public:
 	std::vector<Entity> WaterVec;
 	std::vector<Entity> BoostVec;
 	//Entity LevelMap[LEVEL_HEIGHT][LEVEL_WIDTH];//2D array of static entities. Don't want to use this anymore b/c vector is more convenient to get size
-	//std::vector<std::vector<Entity>> LevelMap;//vector of [layer] static entities
-	//static entity tilemap stored in terms of vertices
-	std::vector<float> vertexData;
-	std::vector<float> texCoordData;
-	//solid tiles in Tiled: 121, 122, 123, 142(black floor)
-	//solid tiles after  flaremap conversion (minus 1): 120,121,122;141(this block doesn't really matter)
+	std::vector<std::vector<Entity>> LevelMap;//vector of [layer] static entities
 };
 
 
@@ -236,185 +195,81 @@ void PlaceEntity(std::string type, float x, float y, GameState* game, FlareMap* 
 			player.sprite.index = 223;
 			player.sprite.spriteCountX = 20;
 			player.sprite.spriteCountY = 20;
-			player.position.x = x;//note that this x is 16.0f*tileLocation ~ pixels = 176.0f	//30.0f;//x;//debug
+			player.position.x = x;//note that this x is 16.0f*tileLocation ~ pixels	//30.0f;//x;//debug
 			player.position.y = y;//NOTE THAT THIS GOES DOWN, since we entered a negatiive value for y in PlaceEntity() //0.0f;//y;
 			//player.position.x = 10.0f * 16.0f;
-			//player.position.y = 20.0f * 16.0f;
+			//player.position.y = 20.0f * 16.0f;//comeback4
 			player.sprite.textureID = gameTexture;
-			player.sprite.size = tileSize;
+			player.sprite.size = 16.0f;
 			game->Player = player;
 	}
-	else if (type == "DuckPrincess") {//
-		Entity duckPrincess;
-		//note the duck texture is at (12blocks,4blocks) of the png
-		duckPrincess.sprite.index = 224;
-		duckPrincess.sprite.spriteCountX = 20;
-		duckPrincess.sprite.spriteCountY = 20;
-		duckPrincess.position.x = x;
-		duckPrincess.position.y = y;
-		duckPrincess.sprite.textureID = gameTexture;
-		//duckPrincess.sprite.size = 16.0f;
-		game->DuckPrincess = duckPrincess;
-	}
-	else if (type == "Water") {//I want the water to make the duck be able to fly
-		Entity water;
-		//note the water texture is at (11blocks,8blocks) of the png
-		water.sprite.index = 208;
-		water.sprite.spriteCountX = 20;
-		water.sprite.spriteCountY = 20;
-		water.position.x = x;
-		water.position.y = y;
-		water.sprite.textureID = gameTexture;
-		//water.sprite.size = 16.0f;
-		game->WaterVec.push_back(water);
+	//else if (type == "DuckPrincess") {//
+	//	Entity duckPrincess;
+	//	//note the duck texture is at (12blocks,4blocks) of the png
+	//	duckPrincess.sprite.index = 224;
+	//	duckPrincess.sprite.spriteCountX = 20;
+	//	duckPrincess.sprite.spriteCountY = 20;
+	//}
+	//else if (type == "Water") {//I want the water to make the duck jump higher
+	//	Entity water;
+	//	//note the water texture is at (11blocks,8blocks) of the png
+	//	water.sprite.index = 208;
+	//	water.sprite.spriteCountX = 20;
+	//	water.sprite.spriteCountY = 20;
 
-	}
-	else if (type == "Boost") {//I want the boost to make the duck go faster
-		Entity boost;
-		//note the boost texture is at (8blocks,4blocks) of the png
-		boost.sprite.index = 144;
-		boost.sprite.spriteCountX = 20;
-		boost.sprite.spriteCountY = 20;
-		boost.position.x = x;
-		boost.position.y = y;
-		boost.sprite.textureID = gameTexture;
-		//boost.sprite.size = 16.0f;
-		game->BoostVec.push_back(boost);
-	}
+	//}
+	//else if (type == "Boost") {//I want the boost to make the duck go faster
+	//	Entity boost;
+	//	//note the boost texture is at (8blocks,4blocks) of the png
+	//	boost.sprite.index = 144;
+	//	boost.sprite.spriteCountX = 20;
+	//	boost.sprite.spriteCountY = 20;
+	//}
 
 }
 
-
+float tileSize = 16.0f;//each tile size is 16 pixels
 void InitializeGame(GameState *game) {//set the positions of all the entities
+	FlareMap map;
 	map.Load("MyLevel1.4.txt");
+	
+	std::vector<std::vector<Entity>> vectorWithSize(map.mapHeight, std::vector<Entity> (map.mapWidth));
+	game->LevelMap = vectorWithSize; //this is to give the LevelMap 2D vector size so I can loop
 
-	float halfSide = tileSize / 2.0f;
 	for (int i = 0; i < map.entities.size(); i++) {//place Dynamic entities
-		PlaceEntity(map.entities[i].type, map.entities[i].x * tileSize + halfSide, map.entities[i].y * -tileSize + halfSide, game, &map);//push into gamestate the initial positions of DYNAMIMC ENTITIES;
+		PlaceEntity(map.entities[i].type, map.entities[i].x * tileSize, map.entities[i].y * -tileSize, game, &map);//push into gamestate the initial positions of DYNAMIMC ENTITIES;
 	}
 
-	int sprintCountX = 20; int sprintCountY = 20;
 	for (int y = 0; y < map.mapHeight; y++) {
 		for (int x = 0; x < map.mapWidth; x++) {
-			if (map.mapData[y][x] != 0) {//don't draw the blank tiles
-				// add vertices
-				float u = (float)(((int)map.mapData[y][x]) % sprintCountX) / (float)sprintCountX;
-				float v = (float)(((int)map.mapData[y][x]) / sprintCountX) / (float)sprintCountY;
-				float spriteWidth = 1.0f / (float)sprintCountX;
-				float spriteHeight = 1.0f / (float)sprintCountY;
-				game->vertexData.insert(game->vertexData.end(), {//*x and *y means to draw at each location for the glvertexattributepointer
-					tileSize * x, -tileSize * y,
-					tileSize * x, (-tileSize * y) - tileSize,
-					(tileSize * x) + tileSize, (-tileSize * y) - tileSize,
-					tileSize * x, -tileSize * y,
-					(tileSize * x) + tileSize, (-tileSize * y) - tileSize,
-					(tileSize * x) + tileSize, -tileSize * y
-					});
-				game->texCoordData.insert(game->texCoordData.end(), {
-					u, v,
-					u, v + (spriteHeight),
-					u + spriteWidth, v + (spriteHeight),
-					u, v,
-					u + spriteWidth, v + (spriteHeight),
-					u + spriteWidth, v
-					});
-			}
+			//comeback: do something with map.mapData[y][x]
+			game->LevelMap[y][x].sprite.index = map.mapData[y][x];//comeback2
+			game->LevelMap[y][x].position.x = x * 16.0f;
+			game->LevelMap[y][x].position.y = -y * 16.0f;
 		}
 	}
 
+	game->LevelMap[20][35].sprite.index = map.mapData[20][35];//comeback3 debug, tile not printing on screen
+	game->LevelMap[20][35].position.x = game->Player.position.x+10.0f;// * 16.0f;
+	game->LevelMap[20][35].position.y = game->Player.position.y+0.0f;// * 16.0f;
+
+	//game->LevelMap[10][5].sprite.index = 1;//debug
+	//game->LevelMap[1][0];
 }
 
-void tilemapRender(GameState game, ShaderProgram* program) {
-	// draw this data
-	GLuint gameTexture = LoadTexture(RESOURCE_FOLDER"CdH_TILES.png");
-	Matrix tilemapModelMatrix;
-	program->SetModelMatrix(tilemapModelMatrix);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); //gets rid of the clear (black) parts of the png
-													   //program.Load(RESOURCE_FOLDER"vertex_textured.glsl", RESOURCE_FOLDER"fragment_textured.glsl");
-	glBindTexture(GL_TEXTURE_2D, gameTexture); //use fontTexture to draw
-	glVertexAttribPointer(program->positionAttribute, 2, GL_FLOAT, false, 0, game.vertexData.data());
-	glEnableVertexAttribArray(program->positionAttribute);
-
-	glVertexAttribPointer(program->texCoordAttribute, 2, GL_FLOAT, false, 0, game.texCoordData.data());
-	glEnableVertexAttribArray(program->texCoordAttribute);
-
-	glUseProgram(program->programID);
-	glDrawArrays(GL_TRIANGLES, 0, game.vertexData.size() / 2);//vertexData.size() gives the number of coordinates, so divide by 2 to get the number of vertices
-	glDisableVertexAttribArray(program->positionAttribute);
-	glDisableVertexAttribArray(program->texCoordAttribute);
-}
-
-
-const Uint8 *keys = SDL_GetKeyboardState(NULL);
-
-
-void Update(GameState* game, float elapsed) {
-	game->Player.Update(elapsed);
-
-	//if entity collides with floor tile, push it back up
-	//solid tiles after  flaremap conversion (minus 1): 120,121,122;141(this block doesn't really matter)
-	//comeback1
-
-	int gridX; int gridY;
-	float halfLength = tileSize / 2.0f;
-	for (int y = 0; y < map.mapHeight; y++) {//comeback2
-		for (int x = 0; x < map.mapHeight; x++) {
-			if (map.mapData[y][x] == 120 || 121 || 122 || 141) {
-				float staticLeft = (float) x * tileSize;
-				float staticRight = (float)(x + 1) * tileSize;
-				float staticTop = (float)y * tileSize;
-				float staticBottom = (float)(y - 1) * tileSize;
-				//player
-				//worldToTileCoordinates(game->Player.position.x, game->Player.position.y, &gridX, &gridY);
-				//if ((gridY - 1 == y) && (gridX))
-
-				if (game->Player.position.y - halfLength <= staticTop) {//&& game->Player.position.x - halfLength >= staticLeft && game->Player.position.x + halfLength <= staticRight && game->Player.position.y + halfLength >= staticTop) {//collision: bottom of player hit top of static entity
-					game->Player.collidedBottom = true;//what to do with this boolean????
-					float penetrationY = fabs(staticTop - (game->Player.position.y - halfLength));
-					//game->Player.position.y += 2.0f;//penetrationY + 0.01f;
-				}
-			}
-			//game->Player.position.y += 1.0f;
-			//game->Player.position.y -= 1.0f;
-		}
-	}
-
-
-}
-
-void ProcessInput(GameState* game, float elapsed) {//make a copy of game so that it only applies acceleration for that instance of pressing
-	if (keys[SDL_SCANCODE_LEFT]) {
-		//player moves left
-		game->Player.acceleration.x = -5.0f;
-	}
-	else if (keys[SDL_SCANCODE_RIGHT]) {
-		//player moves left
-		game->Player.acceleration.x = 5.0f;
-	}
-	else if (keys[SDL_SCANCODE_UP]) {
-		game->Player.acceleration.y = 5.0f;
-	}
-	else {//no keys are pressed, have acceleration reset to 0.
-		game->Player.acceleration.x = 0.0f;
-		game->Player.acceleration.y = 0.0f;
-	}
-	//Update(&game, elapsed);//this will update the player velocity but acceleration will remain 0 if no key is pressed
-}
-
-void Render(GameState game, ShaderProgram* program) {//display the entities on screen
+void Render(GameState* game, ShaderProgram* program) {//display the entities on screen
 	//render static entities
-	tilemapRender(game,program);
+	//for (int y = 0; y < game->LevelMap.size(); y++) {
+	//	for (int x = 0; x < game->LevelMap[0].size(); x++) {
+	//		game->LevelMap[y][x].Render(program);
+	//	}
+	//}
+	game->LevelMap[2][20].Render(program);
+
 
 	//render dynamic entities (note this is rendered after the static entities b/c it needs to be in the frontmost view)
-	game.Player.Render(program);
-	//game->DuckPrincess.Render(program);
-	//for (int i = 0; i < game->BoostVec.size(); i++ ) {
-	//	game->BoostVec[i].Render(program);
-	//}
-	//for (int i = 0; i < game->WaterVec.size(); i++) {
-	//	game->WaterVec[i].Render(program);
-	//} //comeback doesn't render
+	game->Player.Render(program);//not working, maybe placeEntity's gameTexture or something else needs to be in the loop rather than one time use.
+
 
 }
 
@@ -470,7 +325,7 @@ int main(int argc, char *argv[])
 
 		if (elapsed < FIXED_TIMESTEP) {//if not enough time elapsed yet for desired first frame then don't update
 			accumulator = elapsed;
-			continue;//if elapsed isn't big enough, then ignore what's below, go back to the top of the current while loop.
+			continue;//It makes the program crash if I use glClear above it
 		}
 
 
@@ -479,14 +334,14 @@ int main(int argc, char *argv[])
 			
 			/* render */
 			//viewMatrix.Translate(30.0f, 0.0f, 0.0f);
-			viewMatrix.Identity();
+
 			viewMatrix.Translate(-game.Player.position.x, -game.Player.position.y, 0.0f);
 			texturedProgram.SetViewMatrix(viewMatrix);
-			ProcessInput(&game, elapsed);
-			Update(&game,FIXED_TIMESTEP);
-			Render(game,&texturedProgram);
-			
+			Render(&game,&texturedProgram);
+			viewMatrix.Identity();
+
 			/* render */
+
 
 			elapsed -= FIXED_TIMESTEP;
 		}
@@ -524,13 +379,7 @@ int main(int argc, char *argv[])
 1)Edit size of texture
 2)Get the player to translate properly
 3)Get the view matrix to follow the player
-4)Get the tiled background to render properly. Use the tilemap render function (vector of vertices) from 3-05 slides
-5)The player is at the top-left of the stage-rendered-screen for some reason. Fixed: utilize a modelmatrix for the static entities
-6)After rendering the static entities, it seems that the top-left of the level-layer is at the origin. But the player doesn't seem to be on the 16x16 tile. Also it seems that somehow the waterbottle is also nearly at the right place despite not having coordinates assigned.
-fix: offset the dynamic entities by halfSide (i.e. 6.0f) to the right and down.
-7.0)Change the scaling
-7.1)Allow the player to move (i.e. walk & fly). Apply friction. Make a cap for velocity.
+4)Get the tiled background to render properly
 
-8)Apply gravity & Make some of the static entities physical (e.g. player can't fall under the floor)
-9)Apply effects of dynamic entities
+
 */

@@ -45,14 +45,11 @@ float aspectRatio = screenWidth / screenHeight;
 float leftScreen = -aspectRatio * topScreen;
 float rightScreen = aspectRatio * topScreen;
 
-//time and FPS
-float accumulator = 0.0f; float lastFrameTicks = 0.0f;
-
 //game
 float velocityMax = 3.0f;
-float tileSize = 1.0f;//tile size is how big you want each block to be in the world (e.g. our sprite is 16x16pixels in png, but we can make it 1.0x1.0 in world)
-FlareMap map;
 
+//time and FPS
+float accumulator = 0.0f; float lastFrameTicks = 0.0f;
 
 //more global variables
 ShaderProgram texturedProgram;
@@ -163,18 +160,11 @@ public:
 void Entity::Update(float elapsed) {
 	velocity.x += acceleration.x * elapsed;
 	velocity.y += acceleration.y * elapsed;
-	//Set a speed limit
 	if (velocity.x > velocityMax) {
 		velocity.x = velocityMax;
 	}
-	else if (velocity.x < -velocityMax) {
-		velocity.x = -velocityMax;
-	}
 	if (velocity.y > velocityMax) {
 		velocity.y = velocityMax;
-	}
-	else if (velocity.y < -velocityMax) {
-		velocity.y = -velocityMax;
 	}
 	position.x += velocity.x * elapsed;
 	position.y += velocity.y * elapsed;
@@ -185,17 +175,8 @@ void Entity::Update(float elapsed) {
 		//velocity.y = lerp(velocity.y, 0.0f, elapsed * friction.y);
 	}
 
-	//gravity for dynamic entities
-	float gravity = -1.0f;
-	velocity.y += gravity * elapsed;
 
 }
-
-void worldToTileCoordinates(float worldX, float worldY, int *gridX, int *gridY) {//divide worldSize/tileSize = gridSize (i.e. which block number along x and y)
-	*gridX = (int)(worldX / tileSize);//note we're casting to int
-	*gridY = (int)(-worldY / tileSize);
-}
-
 void Entity::Render(ShaderProgram* program) {
 	Matrix modelMatrix;
 	modelMatrix.Identity();
@@ -222,11 +203,10 @@ public:
 	//static entity tilemap stored in terms of vertices
 	std::vector<float> vertexData;
 	std::vector<float> texCoordData;
-	//solid tiles in Tiled: 121, 122, 123, 142(black floor)
-	//solid tiles after  flaremap conversion (minus 1): 120,121,122;141(this block doesn't really matter)
 };
 
 
+float tileSize = 1.0f;//tile size is how big you want each block to be in the world (e.g. our sprite is 16x16pixels in png, but we can make it 1.0x1.0 in world)
 void PlaceEntity(std::string type, float x, float y, GameState* game, FlareMap* map) {//this is for initalizing positions of entities
 	//note float x&y can be in pixel coords by inputting x*tileSize where tileSize = 16.0f
 	GLuint gameTexture = LoadTexture(RESOURCE_FOLDER"CdH_TILES.png");
@@ -286,6 +266,7 @@ void PlaceEntity(std::string type, float x, float y, GameState* game, FlareMap* 
 
 
 void InitializeGame(GameState *game) {//set the positions of all the entities
+	FlareMap map;
 	map.Load("MyLevel1.4.txt");
 
 	float halfSide = tileSize / 2.0f;
@@ -324,7 +305,7 @@ void InitializeGame(GameState *game) {//set the positions of all the entities
 
 }
 
-void tilemapRender(GameState game, ShaderProgram* program) {
+void tilemapRender(GameState game, ShaderProgram* program) {//comeback
 	// draw this data
 	GLuint gameTexture = LoadTexture(RESOURCE_FOLDER"CdH_TILES.png");
 	Matrix tilemapModelMatrix;
@@ -352,34 +333,6 @@ const Uint8 *keys = SDL_GetKeyboardState(NULL);
 void Update(GameState* game, float elapsed) {
 	game->Player.Update(elapsed);
 
-	//if entity collides with floor tile, push it back up
-	//solid tiles after  flaremap conversion (minus 1): 120,121,122;141(this block doesn't really matter)
-	//comeback1
-
-	int gridX; int gridY;
-	float halfLength = tileSize / 2.0f;
-	for (int y = 0; y < map.mapHeight; y++) {//comeback2
-		for (int x = 0; x < map.mapHeight; x++) {
-			if (map.mapData[y][x] == 120 || 121 || 122 || 141) {
-				float staticLeft = (float) x * tileSize;
-				float staticRight = (float)(x + 1) * tileSize;
-				float staticTop = (float)y * tileSize;
-				float staticBottom = (float)(y - 1) * tileSize;
-				//player
-				//worldToTileCoordinates(game->Player.position.x, game->Player.position.y, &gridX, &gridY);
-				//if ((gridY - 1 == y) && (gridX))
-
-				if (game->Player.position.y - halfLength <= staticTop) {//&& game->Player.position.x - halfLength >= staticLeft && game->Player.position.x + halfLength <= staticRight && game->Player.position.y + halfLength >= staticTop) {//collision: bottom of player hit top of static entity
-					game->Player.collidedBottom = true;//what to do with this boolean????
-					float penetrationY = fabs(staticTop - (game->Player.position.y - halfLength));
-					//game->Player.position.y += 2.0f;//penetrationY + 0.01f;
-				}
-			}
-			//game->Player.position.y += 1.0f;
-			//game->Player.position.y -= 1.0f;
-		}
-	}
-
 
 }
 
@@ -397,7 +350,6 @@ void ProcessInput(GameState* game, float elapsed) {//make a copy of game so that
 	}
 	else {//no keys are pressed, have acceleration reset to 0.
 		game->Player.acceleration.x = 0.0f;
-		game->Player.acceleration.y = 0.0f;
 	}
 	//Update(&game, elapsed);//this will update the player velocity but acceleration will remain 0 if no key is pressed
 }

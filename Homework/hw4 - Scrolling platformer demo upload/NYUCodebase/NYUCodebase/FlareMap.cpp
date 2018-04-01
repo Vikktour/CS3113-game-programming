@@ -19,6 +19,7 @@ FlareMap::~FlareMap() {
 	delete mapData;
 }
 
+//read header and initialize an array of array of heightxwidth (dimensions of tiles in the world)
 bool FlareMap::ReadHeader(std::ifstream &stream) {
 	std::string line;
 	mapWidth = -1;
@@ -46,6 +47,8 @@ bool FlareMap::ReadHeader(std::ifstream &stream) {
 	}
 }
 
+
+//read [layer] and store the data(of sprite index) into each corresponding x,y tile position
 bool FlareMap::ReadLayerData(std::ifstream &stream) {//static objects
 	std::string line;
 	while(getline(stream, line)) {
@@ -60,12 +63,13 @@ bool FlareMap::ReadLayerData(std::ifstream &stream) {//static objects
 				std::istringstream lineStream(line);
 				std::string tile;
 				for(int x=0; x < mapWidth; x++) {
-					std::getline(lineStream, tile, ',');//for every data value, convert to int and then store it into mapdata's matrix (array of arrays: width x length)
-					unsigned char val =  (unsigned char)atoi(tile.c_str());
+					std::getline(lineStream, tile, ',');//for every data value, convert to int-1 and then store it into mapdata's matrix (array of arrays: width x length)
+					int val = atoi(tile.c_str());
 					if(val > 0) {
 						mapData[y][x] = val-1;
-					} else {
-						mapData[y][x] = 0;
+					} else {//if the val = 0 then it's considered a tile of empty space
+						mapData[y][x] = -1;
+						//mapData[y][x] = 50;//debug
 					}
 				}
 			}
@@ -74,7 +78,7 @@ bool FlareMap::ReadLayerData(std::ifstream &stream) {//static objects
 	return true;
 }
 
-
+//store the tileblock x,y position of the dynamic entity (e.g. alligator is placed in (15blocksDown,20blocksRight) in the world so alligatorMap.x = 15, alligatorMap.y=20)
 bool FlareMap::ReadEntityData(std::ifstream &stream) {//dynamic objects (can move: i.e. walk or disappear)
 	std::string line;
 	std::string type;
@@ -115,7 +119,7 @@ void FlareMap::Load(const std::string fileName) {//insert .txt file
 			}
 		} else if(line == "[layer]") {
 			ReadLayerData(infile);
-		} else if(line == "[ObjectsLayer]") {
+		} else if(line == "[Object Layer 1]") {
 			ReadEntityData(infile);
 		}
 	}

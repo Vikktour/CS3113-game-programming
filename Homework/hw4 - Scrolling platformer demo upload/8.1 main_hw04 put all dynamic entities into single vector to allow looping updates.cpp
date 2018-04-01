@@ -163,18 +163,11 @@ public:
 void Entity::Update(float elapsed) {
 	velocity.x += acceleration.x * elapsed;
 	velocity.y += acceleration.y * elapsed;
-	//Set a speed limit
 	if (velocity.x > velocityMax) {
 		velocity.x = velocityMax;
 	}
-	else if (velocity.x < -velocityMax) {
-		velocity.x = -velocityMax;
-	}
 	if (velocity.y > velocityMax) {
 		velocity.y = velocityMax;
-	}
-	else if (velocity.y < -velocityMax) {
-		velocity.y = -velocityMax;
 	}
 	position.x += velocity.x * elapsed;
 	position.y += velocity.y * elapsed;
@@ -213,6 +206,7 @@ bool Entity::CollidesWith(Entity *entity) {
 
 class GameState {
 public:
+	std::vector<Entity> gameEntities;
 	Entity Player;
 	Entity DuckPrincess;
 	std::vector<Entity> WaterVec;
@@ -223,7 +217,7 @@ public:
 	std::vector<float> vertexData;
 	std::vector<float> texCoordData;
 	//solid tiles in Tiled: 121, 122, 123, 142(black floor)
-	//solid tiles after  flaremap conversion (minus 1): 120,121,122;141(this block doesn't really matter)
+	//solid tiles after  flaremap conversion (minus 1): 120,121,122,141
 };
 
 
@@ -324,7 +318,7 @@ void InitializeGame(GameState *game) {//set the positions of all the entities
 
 }
 
-void tilemapRender(GameState game, ShaderProgram* program) {
+void tilemapRender(GameState game, ShaderProgram* program) {//comeback
 	// draw this data
 	GLuint gameTexture = LoadTexture(RESOURCE_FOLDER"CdH_TILES.png");
 	Matrix tilemapModelMatrix;
@@ -353,32 +347,7 @@ void Update(GameState* game, float elapsed) {
 	game->Player.Update(elapsed);
 
 	//if entity collides with floor tile, push it back up
-	//solid tiles after  flaremap conversion (minus 1): 120,121,122;141(this block doesn't really matter)
-	//comeback1
-
-	int gridX; int gridY;
-	float halfLength = tileSize / 2.0f;
-	for (int y = 0; y < map.mapHeight; y++) {//comeback2
-		for (int x = 0; x < map.mapHeight; x++) {
-			if (map.mapData[y][x] == 120 || 121 || 122 || 141) {
-				float staticLeft = (float) x * tileSize;
-				float staticRight = (float)(x + 1) * tileSize;
-				float staticTop = (float)y * tileSize;
-				float staticBottom = (float)(y - 1) * tileSize;
-				//player
-				//worldToTileCoordinates(game->Player.position.x, game->Player.position.y, &gridX, &gridY);
-				//if ((gridY - 1 == y) && (gridX))
-
-				if (game->Player.position.y - halfLength <= staticTop) {//&& game->Player.position.x - halfLength >= staticLeft && game->Player.position.x + halfLength <= staticRight && game->Player.position.y + halfLength >= staticTop) {//collision: bottom of player hit top of static entity
-					game->Player.collidedBottom = true;//what to do with this boolean????
-					float penetrationY = fabs(staticTop - (game->Player.position.y - halfLength));
-					//game->Player.position.y += 2.0f;//penetrationY + 0.01f;
-				}
-			}
-			//game->Player.position.y += 1.0f;
-			//game->Player.position.y -= 1.0f;
-		}
-	}
+	//solid tiles after  flaremap conversion (minus 1): 120,121,122,141
 
 
 }
