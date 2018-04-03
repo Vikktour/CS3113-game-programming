@@ -4,7 +4,7 @@ hw04 Scrolling platformer demo
 Controls:
 
 questions and answers:
-
+What is bool collidedBottom for? Ans: It's to apply friction (only if the dynamic entity is colliding with something under it)
 */
 
 #define STB_IMAGE_IMPLEMENTATION //to allow assert(false)
@@ -193,7 +193,7 @@ void Entity::Update(float elapsed) {
 
 void worldToTileCoordinates(float worldX, float worldY, int *gridX, int *gridY) {//divide worldSize/tileSize = gridSize (i.e. which block number along x and y)
 	*gridX = (int)(worldX / tileSize);//note we're casting to int
-	*gridY = (int)(-worldY / tileSize);
+	*gridY = (int)(-worldY / tileSize);//note gridY is (-)
 }
 
 void Entity::Render(ShaderProgram* program) {
@@ -229,11 +229,11 @@ public:
 
 void PlaceEntity(std::string type, float x, float y, GameState* game, FlareMap* map) {//this is for initalizing positions of entities
 	//note float x&y can be in pixel coords by inputting x*tileSize where tileSize = 16.0f
-	GLuint gameTexture = LoadTexture(RESOURCE_FOLDER"CdH_TILES.png");
+	GLuint gameTexture = LoadTexture(RESOURCE_FOLDER"CdH_TILES.png");//don't put this in loop!
 	if (type == "DuckPlayer") {
 			Entity player;
 			//note the duckplayer texture is at (12blocks,3blocks) of the png
-			player.sprite.index = 223;
+			player.sprite.index = 223-1;//our definition of sprite indices is based on the first tile being index=0, so subtract 1 from the n-th sprite in this case n=223th sprite is the first duck, minus 1 to n
 			player.sprite.spriteCountX = 20;
 			player.sprite.spriteCountY = 20;
 			player.position.x = x;//note that this x is 16.0f*tileLocation ~ pixels = 176.0f	//30.0f;//x;//debug
@@ -247,38 +247,38 @@ void PlaceEntity(std::string type, float x, float y, GameState* game, FlareMap* 
 	else if (type == "DuckPrincess") {//
 		Entity duckPrincess;
 		//note the duck texture is at (12blocks,4blocks) of the png
-		duckPrincess.sprite.index = 224;
+		duckPrincess.sprite.index = 224-1;
 		duckPrincess.sprite.spriteCountX = 20;
 		duckPrincess.sprite.spriteCountY = 20;
 		duckPrincess.position.x = x;
 		duckPrincess.position.y = y;
 		duckPrincess.sprite.textureID = gameTexture;
-		//duckPrincess.sprite.size = 16.0f;
+		duckPrincess.sprite.size = tileSize;
 		game->DuckPrincess = duckPrincess;
 	}
 	else if (type == "Water") {//I want the water to make the duck be able to fly
 		Entity water;
 		//note the water texture is at (11blocks,8blocks) of the png
-		water.sprite.index = 208;
+		water.sprite.index = 208-1;
 		water.sprite.spriteCountX = 20;
 		water.sprite.spriteCountY = 20;
 		water.position.x = x;
 		water.position.y = y;
 		water.sprite.textureID = gameTexture;
-		//water.sprite.size = 16.0f;
+		water.sprite.size = tileSize;
 		game->WaterVec.push_back(water);
 
 	}
 	else if (type == "Boost") {//I want the boost to make the duck go faster
 		Entity boost;
 		//note the boost texture is at (8blocks,4blocks) of the png
-		boost.sprite.index = 144;
+		boost.sprite.index = 144-1;
 		boost.sprite.spriteCountX = 20;
 		boost.sprite.spriteCountY = 20;
 		boost.position.x = x;
 		boost.position.y = y;
 		boost.sprite.textureID = gameTexture;
-		//boost.sprite.size = 16.0f;
+		boost.sprite.size = tileSize;
 		game->BoostVec.push_back(boost);
 	}
 
@@ -324,16 +324,18 @@ void InitializeGame(GameState *game) {//set the positions of all the entities
 
 }
 
-void tilemapRender(GameState game, ShaderProgram* program) {
+
+void tilemapRender(GameState game, ShaderProgram* program) {//for rendering static entities
 	// draw this data
 	GLuint gameTexture = LoadTexture(RESOURCE_FOLDER"CdH_TILES.png");
+	//GLuint gameTexture = LoadTexture(RESOURCE_FOLDER"CdH_TILES.png");
 	Matrix tilemapModelMatrix;
 	program->SetModelMatrix(tilemapModelMatrix);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); //gets rid of the clear (black) parts of the png
-													   //program.Load(RESOURCE_FOLDER"vertex_textured.glsl", RESOURCE_FOLDER"fragment_textured.glsl");
+	//glEnable(GL_BLEND);//don't put this nor glBlendFunc in loop!
+	//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); //gets rid of the clear (black) parts of the png
+	//												   //program.Load(RESOURCE_FOLDER"vertex_textured.glsl", RESOURCE_FOLDER"fragment_textured.glsl");
 	glBindTexture(GL_TEXTURE_2D, gameTexture); //use fontTexture to draw
-	glVertexAttribPointer(program->positionAttribute, 2, GL_FLOAT, false, 0, game.vertexData.data());
+	glVertexAttribPointer(program->positionAttribute, 2, GL_FLOAT, false, 0, game.vertexData.data());//the "2" stands for 2 coords per vertex
 	glEnableVertexAttribArray(program->positionAttribute);
 
 	glVertexAttribPointer(program->texCoordAttribute, 2, GL_FLOAT, false, 0, game.texCoordData.data());
@@ -357,27 +359,30 @@ void Update(GameState* game, float elapsed) {
 	//comeback1
 
 	int gridX; int gridY;
-	float halfLength = tileSize / 2.0f;
-	for (int y = 0; y < map.mapHeight; y++) {//comeback2
-		for (int x = 0; x < map.mapHeight; x++) {
-			if (map.mapData[y][x] == 120 || 121 || 122 || 141) {
-				float staticLeft = (float) x * tileSize;
-				float staticRight = (float)(x + 1) * tileSize;
-				float staticTop = (float)y * tileSize;
-				float staticBottom = (float)(y - 1) * tileSize;
-				//player
-				//worldToTileCoordinates(game->Player.position.x, game->Player.position.y, &gridX, &gridY);
-				//if ((gridY - 1 == y) && (gridX))
-
-				if (game->Player.position.y - halfLength <= staticTop) {//&& game->Player.position.x - halfLength >= staticLeft && game->Player.position.x + halfLength <= staticRight && game->Player.position.y + halfLength >= staticTop) {//collision: bottom of player hit top of static entity
-					game->Player.collidedBottom = true;//what to do with this boolean????
-					float penetrationY = fabs(staticTop - (game->Player.position.y - halfLength));
-					//game->Player.position.y += 2.0f;//penetrationY + 0.01f;
-				}
+	float halfSize = tileSize / 2.0f;
+	//find the bottom of the player and then convert that coord to tiled
+	float playerLeft = game->Player.position.x - halfSize;
+	float playerRight = game->Player.position.x + halfSize;
+	float playerTop = game->Player.position.y + halfSize;
+	float playerBottom = game->Player.position.y - halfSize;
+	//My solid tiles indices: 120,121,122; 141
+	worldToTileCoordinates(game->Player.position.x, playerBottom, &gridX, &gridY);//comeback5
+	//note the return value of gridX,gridY corresponds to which tile (defined in row=gridX,col=gridY) is in touch with the player's bottom.
+	if (gridX <= map.mapWidth && gridX >= 0 && gridY >= -map.mapHeight && gridY <= 0) {//if the player is still within Level bounds
+		if (map.mapData[gridY][gridX] == (120 || 121 || 122 || 141)) {//COLLISION on the bottom of player(if the playerBottom's grid position corresponds to the solid tile). Resolve it in terms of world coords
+			float tileLeft = (float)gridX * tileSize;
+			float tileRight = ((float)gridX + 1.0f) * tileSize;
+			float tileTop = (float)gridY * tileSize;
+			float tileBottom = ((float)gridY - 1.0f) * tileSize;
+			//This check is useful if the player is larger than 1tilex1tile
+			if (!(playerBottom > tileTop || playerTop < tileBottom || playerLeft > tileRight || playerRight < tileLeft)) {//collision!
+				float penetrationY = fabs(playerBottom - tileTop);
+				//game->Player.position.y += penetrationY + 0.001f;
+				//game->Player.velocity.y = 0.0f;
 			}
-			//game->Player.position.y += 1.0f;
-			//game->Player.position.y -= 1.0f;
-		}
+	}
+
+
 	}
 
 
@@ -404,17 +409,20 @@ void ProcessInput(GameState* game, float elapsed) {//make a copy of game so that
 
 void Render(GameState game, ShaderProgram* program) {//display the entities on screen
 	//render static entities
+	glClear(GL_COLOR_BUFFER_BIT);//rendering happens once very frame, but there's no way to remove what's previously rendered, but glClear will make what's previously rendered blank.
+	glEnable(GL_BLEND);//don't put this nor glBlendFunc in loop!
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); //gets rid of the clear (black) parts of the png
 	tilemapRender(game,program);
 
 	//render dynamic entities (note this is rendered after the static entities b/c it needs to be in the frontmost view)
 	game.Player.Render(program);
-	//game->DuckPrincess.Render(program);
-	//for (int i = 0; i < game->BoostVec.size(); i++ ) {
-	//	game->BoostVec[i].Render(program);
-	//}
-	//for (int i = 0; i < game->WaterVec.size(); i++) {
-	//	game->WaterVec[i].Render(program);
-	//} //comeback doesn't render
+	game.DuckPrincess.Render(program);
+	for (int i = 0; i < game.BoostVec.size(); i++ ) {
+		game.BoostVec[i].Render(program);
+	}
+	for (int i = 0; i < game.WaterVec.size(); i++) {
+		game.WaterVec[i].Render(program);
+	} //comeback doesn't render
 
 }
 
@@ -512,12 +520,7 @@ int main(int argc, char *argv[])
 1)Switched the non-uniform sprite class & draw() to a uniform sprite class & draw()
 2)Flaremap.cpp modify the flags to fit the title of my types (e.g. had to change: else if(line == "[ObjectsLayer]") to [Object Layer 1] to match my type name, due to how the Tiled software saved the type as 
 3)avoid having glCLear() in the same loop as the accumulator FPS checker, that along with "continue" will cause the game to crash. A fix i did was comment out glClear() and then uncommented "continue"
-
-
-
-
-
-
+4)Doing glClear(GL_COLOR_BUFFER_BIT) before every render will help get rid of the distortion of outside the stage level map
 */
 
 /*Edit log
