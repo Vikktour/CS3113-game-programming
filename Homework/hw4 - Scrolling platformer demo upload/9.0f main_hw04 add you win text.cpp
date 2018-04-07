@@ -1,18 +1,13 @@
 /*
 Victor Zheng vz365
 hw04 Scrolling platformer demo
-Game Rules:
-Controls: up down left right
-Get to the duck princess to win.
-The waterbottles help boost speed.
-The book teaches the player to fly.
+Controls:
 
 questions and answers:
 1)What is bool collidedBottom for? Ans: It's to apply friction (only if the dynamic entity is colliding with something under it)
-3)The player shakes when colliding with tile above because the "jump" has a big velocity so it moves up quite a bit at each frame. How to fix that? Ans: Allow jumping only when player collidedBottom (i.e. on the ground)
 
 2)Checking for collision when the player is larger than 1 tile size?
-
+3)The player shakes when colliding with tile above because the "jump" has a big velocity so it moves up quite a bit at each frame. How to fix that?
 
 */
 
@@ -66,10 +61,7 @@ FlareMap map;
 
 //more global variables
 ShaderProgram texturedProgram;
-ShaderProgram textProgram;
 SDL_Window* displayWindow;
-
-void DrawText(ShaderProgram *program, int fontTexture, std::string text, float size, float spacing);
 
 float lerp(float v0, float v1, float t) {//used for friction. Linear Interpolation (LERP)
 	return (1.0f - t)*v0 + t * v1;//note that everytime this function is used, if v1 is 0 then we're going to keep dividing v0 to eventually go to 0.
@@ -241,7 +233,6 @@ public:
 	std::vector<float> texCoordData;
 	//solid tiles in Tiled: 121, 122, 123, 142(black floor)
 	//solid tiles after  flaremap conversion (minus 1): 120,121,122;141(this block doesn't really matter)
-	bool married;
 };
 
 
@@ -316,7 +307,6 @@ void InitializeGame(GameState *game) {//set the positions of all the entities
 
 	game->Player.entityMaxVelocity = velocityMax;
 	game->Player.fly = false;
-	game->married = false;
 
 	int sprintCountX = 20; int sprintCountY = 20;
 	for (int y = 0; y < map.mapHeight; y++) {
@@ -488,17 +478,9 @@ void Update(GameState* game, float elapsed) {
 	}
 
 	//collision with duckPrincess: add "You Win" text to screen
-	for (int i = 0; i < game->BoostVec.size(); i++) {//speedboost
-		float princessLeft = game->DuckPrincess.position.x - halfSize;
-		float princessRight = game->DuckPrincess.position.x + halfSize;
-		float princessTop = game->DuckPrincess.position.y + halfSize;
-		float princessBottom = game->DuckPrincess.position.y - halfSize;
-		if (!(playerLeft > princessRight || playerRight < princessLeft || playerTop<princessBottom || playerBottom>princessTop)) {
-			if (playerTop >= game->DuckPrincess.position.y) {//an extra check to avoid accidental touch (from jumping from below)
-				game->married = true;
-			}
-		}
-	}
+
+
+
 
 	game->Player.Update(elapsed);
 }
@@ -529,7 +511,7 @@ void ProcessInput(GameState* game, float elapsed) {//make a copy of game so that
 	//Update(&game, elapsed);//this will update the player velocity but acceleration will remain 0 if no key is pressed
 }
 
-void Render(GameState game, ShaderProgram* program, GLuint texture) {//display the entities on screen
+void Render(GameState game, ShaderProgram* program) {//display the entities on screen
 	//render static entities
 	glClear(GL_COLOR_BUFFER_BIT);//rendering happens once very frame, but there's no way to remove what's previously rendered, but glClear will make what's previously rendered blank.
 	glEnable(GL_BLEND);//don't put this nor glBlendFunc in loop!
@@ -548,58 +530,9 @@ void Render(GameState game, ShaderProgram* program, GLuint texture) {//display t
 
 	game.Player.Render(program);
 
-	if (game.married == true) {//game is won, print winning text
-		float textSize = 0.5f; float textSpacing = 0.0f;
-		Matrix modelMatrix;
-		modelMatrix.Identity();
-		modelMatrix.Translate(game.Player.position.x - tileSize, game.Player.position.y + tileSize, game.Player.position.z);
-		program->SetModelMatrix(modelMatrix);
-		DrawText(program, texture, "You Win!", textSize, textSpacing);
-	}
-
-
 }
 
-void DrawText(ShaderProgram *program, int fontTexture, std::string text, float size, float spacing) { //for uniform (text) sprites
-	float texture_size = 1.0 / 16.0f; //insert 16x16 grid
-	std::vector<float> vertexData;
-	std::vector<float> texCoordData;
-	for (int i = 0; i < text.length(); i++) {
-		int spriteIndex = (int)text[i];
-		float texture_x = (float)(spriteIndex % 16) / 16.0f;
-		float texture_y = (float)(spriteIndex / 16) / 16.0f;
-		vertexData.insert(vertexData.end(), {
-			((size + spacing) * i) + (-0.5f * size), 0.5f * size,
-			((size + spacing) * i) + (-0.5f * size), -0.5f * size,
-			((size + spacing) * i) + (0.5f * size), 0.5f * size,
-			((size + spacing) * i) + (0.5f * size), -0.5f * size,
-			((size + spacing) * i) + (0.5f * size), 0.5f * size,
-			((size + spacing) * i) + (-0.5f * size), -0.5f * size,
-			});
-		texCoordData.insert(texCoordData.end(), {
-			texture_x, texture_y,
-			texture_x, texture_y + texture_size,
-			texture_x + texture_size, texture_y,
-			texture_x + texture_size, texture_y + texture_size,
-			texture_x + texture_size, texture_y,
-			texture_x, texture_y + texture_size,
-			});
-	}
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); //gets rid of the clear (black) parts of the png
-													   //program.Load(RESOURCE_FOLDER"vertex_textured.glsl", RESOURCE_FOLDER"fragment_textured.glsl");
-	glBindTexture(GL_TEXTURE_2D, fontTexture); //use fontTexture to draw
-	glVertexAttribPointer(program->positionAttribute, 2, GL_FLOAT, false, 0, vertexData.data());
-	glEnableVertexAttribArray(program->positionAttribute);
 
-	glVertexAttribPointer(program->texCoordAttribute, 2, GL_FLOAT, false, 0, texCoordData.data());
-	glEnableVertexAttribArray(program->texCoordAttribute);
-
-	glUseProgram(program->programID);
-	glDrawArrays(GL_TRIANGLES, 0, vertexData.size() / 2);//vertexData.size() gives the number of coordinates, so divide by 2 to get the number of vertices
-	glDisableVertexAttribArray(program->positionAttribute);
-	glDisableVertexAttribArray(program->texCoordAttribute);
-}
 
 
 int main(int argc, char *argv[])
@@ -624,8 +557,6 @@ int main(int argc, char *argv[])
 		texturedProgram.Load(RESOURCE_FOLDER"vertex_textured.glsl", RESOURCE_FOLDER"fragment_textured.glsl");
 		texturedProgram.SetProjectionMatrix(projectionMatrix);
 		texturedProgram.SetViewMatrix(viewMatrix);//I will nened to have to set viewmatrix to follow player position
-
-		GLuint fontTexture = LoadTexture(RESOURCE_FOLDER"1font.png");
 
 		GameState game;
 		InitializeGame(&game);
@@ -667,7 +598,7 @@ int main(int argc, char *argv[])
 			texturedProgram.SetViewMatrix(viewMatrix);
 			ProcessInput(&game, elapsed);
 			Update(&game,FIXED_TIMESTEP);
-			Render(game,&texturedProgram,fontTexture);
+			Render(game,&texturedProgram);
 			
 			/* render */
 
@@ -695,7 +626,7 @@ int main(int argc, char *argv[])
 1)Switched the non-uniform sprite class & draw() to a uniform sprite class & draw()
 2)Flaremap.cpp modify the flags to fit the title of my types (e.g. had to change: else if(line == "[ObjectsLayer]") to [Object Layer 1] to match my type name, due to how the Tiled software saved the type as 
 3)avoid having glCLear() in the same loop as the accumulator FPS checker, that along with "continue" will cause the game to crash. A fix i did was comment out glClear() and then uncommented "continue"
-4)Doing glClear(GL_COLOR_BUFFER_BIT) before every render will help get rid of the distortion/glitchiness of outside the stage level map
+4)Doing glClear(GL_COLOR_BUFFER_BIT) before every render will help get rid of the distortion of outside the stage level map
 */
 
 /*Edit log
