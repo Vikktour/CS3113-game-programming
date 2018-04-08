@@ -10,9 +10,10 @@ The book teaches the player to fly.
 questions and answers:
 1)What is bool collidedBottom for? Ans: It's to apply friction (only if the dynamic entity is colliding with something under it)
 3)The player shakes when colliding with tile above because the "jump" has a big velocity so it moves up quite a bit at each frame. How to fix that? Ans: Allow jumping only when player collidedBottom (i.e. on the ground)
+4)Changing which way the player faces: scale the model matrix by -1
 
 2)Checking for collision when the player is larger than 1 tile size?
-
+5)How to limit the viewmatrix to only see within level bounds?
 
 */
 
@@ -166,6 +167,7 @@ public:
 	Vector3 friction;
 	float entityMaxVelocity;
 	bool isStatic;
+	bool faceOtherWay;
 	EntityType entityType;
 	bool collidedTop;
 	bool collidedBottom;
@@ -217,6 +219,9 @@ void Entity::Render(ShaderProgram* program) {
 	Matrix modelMatrix;
 	modelMatrix.Identity();
 	modelMatrix.Translate(position.x, position.y, position.z);
+	if (faceOtherWay == true) {//player faces right
+		modelMatrix.Scale(-1.0f, 1.0f, 1.0f);
+	}
 	//modelMatrix.Translate(30.0f, 30.0f, position.z);
 	program->SetModelMatrix(modelMatrix);
 	sprite.Draw(program);
@@ -316,6 +321,7 @@ void InitializeGame(GameState *game) {//set the positions of all the entities
 
 	game->Player.entityMaxVelocity = velocityMax;
 	game->Player.fly = false;
+	game->Player.faceOtherWay = false;
 	game->married = false;
 
 	int sprintCountX = 20; int sprintCountY = 20;
@@ -500,6 +506,11 @@ void Update(GameState* game, float elapsed) {
 		}
 	}
 
+	//player go out of bounds, reset the game
+	if (!(gridX < map.mapWidth && gridX >= 0 && gridY < map.mapHeight && gridY >= 0)) {
+		InitializeGame(game);
+	}
+
 	game->Player.Update(elapsed);
 }
 
@@ -507,10 +518,13 @@ void ProcessInput(GameState* game, float elapsed) {//make a copy of game so that
 	if (keys[SDL_SCANCODE_LEFT]) {
 		//player moves left
 		game->Player.acceleration.x = -5.0f;
+		game->Player.faceOtherWay = false;
 	}
 	else if (keys[SDL_SCANCODE_RIGHT]) {
 		//player moves left
 		game->Player.acceleration.x = 5.0f;
+		//change the player's facing-direction
+		game->Player.faceOtherWay = true;
 	}
 	else if (keys[SDL_SCANCODE_UP]) {
 		//game->Player.acceleration.y = 5.0f;//don't do this, keep acceleration as the gravity, and just initialize velocity
@@ -708,8 +722,10 @@ int main(int argc, char *argv[])
 fix: offset the dynamic entities by halfSide (i.e. 6.0f) to the right and down.
 7.0)Change the scaling
 7.1)Allow the player to move (i.e. walk & fly). Apply friction. Make a cap for velocity.
-
 8)Apply gravity & Make some of the static entities physical (e.g. player can't fall under the floor)
 9)Apply effects of dynamic entities
 10)Friction only applys when player collidedBottom
+
+11)Make the player's face turn around when pressing left/right
+12)If player falls out of bounds, wait 3s and then reset level
 */
