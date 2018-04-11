@@ -356,16 +356,16 @@ void InitializeGame(GameState *game) {//set the positions of all the entities
 }
 
 
-void tilemapRender(GameState game, ShaderProgram* program) {//for rendering static entities
+void tilemapRender(GameState game, ShaderProgram* program, GLuint gameTexture) {//for rendering static entities
 	// draw this data
-	GLuint gameTexture = LoadTexture(RESOURCE_FOLDER"CdH_TILES.png");
+	
 	//GLuint gameTexture = LoadTexture(RESOURCE_FOLDER"CdH_TILES.png");
 	Matrix tilemapModelMatrix;
 	program->SetModelMatrix(tilemapModelMatrix);
 	//glEnable(GL_BLEND);//don't put this nor glBlendFunc in loop!
 	//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); //gets rid of the clear (black) parts of the png
 	//												   //program.Load(RESOURCE_FOLDER"vertex_textured.glsl", RESOURCE_FOLDER"fragment_textured.glsl");
-	glBindTexture(GL_TEXTURE_2D, gameTexture); //use fontTexture to draw
+	glBindTexture(GL_TEXTURE_2D, gameTexture); //use game's texture to draw
 	glVertexAttribPointer(program->positionAttribute, 2, GL_FLOAT, false, 0, game.vertexData.data());//the "2" stands for 2 coords per vertex
 	glEnableVertexAttribArray(program->positionAttribute);
 
@@ -543,12 +543,12 @@ void ProcessInput(GameState* game, float elapsed) {//make a copy of game so that
 	//Update(&game, elapsed);//this will update the player velocity but acceleration will remain 0 if no key is pressed
 }
 
-void Render(GameState game, ShaderProgram* program, GLuint texture) {//display the entities on screen
+void Render(GameState game, ShaderProgram* program, GLuint gameTexture, GLuint fontTexture) {//display the entities on screen
 	//render static entities
 	glClear(GL_COLOR_BUFFER_BIT);//rendering happens once very frame, but there's no way to remove what's previously rendered, but glClear will make what's previously rendered blank.
 	glEnable(GL_BLEND);//don't put this nor glBlendFunc in loop!
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); //gets rid of the clear (black) parts of the png
-	tilemapRender(game,program);
+	tilemapRender(game,program,gameTexture);
 
 	//render dynamic entities (note this is rendered after the static entities b/c it needs to be in the frontmost view)
 
@@ -568,7 +568,7 @@ void Render(GameState game, ShaderProgram* program, GLuint texture) {//display t
 		modelMatrix.Identity();
 		modelMatrix.Translate(game.Player.position.x - tileSize, game.Player.position.y + tileSize, game.Player.position.z);
 		program->SetModelMatrix(modelMatrix);
-		DrawText(program, texture, "You Win!", textSize, textSpacing);
+		DrawText(program, fontTexture, "You Win!", textSize, textSpacing);
 	}
 
 
@@ -637,9 +637,10 @@ int main(int argc, char *argv[])
 
 		texturedProgram.Load(RESOURCE_FOLDER"vertex_textured.glsl", RESOURCE_FOLDER"fragment_textured.glsl");
 		texturedProgram.SetProjectionMatrix(projectionMatrix);
-		texturedProgram.SetViewMatrix(viewMatrix);//I will nened to have to set viewmatrix to follow player position
+		texturedProgram.SetViewMatrix(viewMatrix);//I will need to have to set viewmatrix to follow player position
 
 		GLuint fontTexture = LoadTexture(RESOURCE_FOLDER"1font.png");
+		GLuint gameTexture = LoadTexture(RESOURCE_FOLDER"CdH_TILES.png");
 
 		GameState game;
 		InitializeGame(&game);
@@ -681,7 +682,7 @@ int main(int argc, char *argv[])
 			texturedProgram.SetViewMatrix(viewMatrix);
 			ProcessInput(&game, elapsed);
 			Update(&game,FIXED_TIMESTEP);
-			Render(game,&texturedProgram,fontTexture);
+			Render(game,&texturedProgram,gameTexture,fontTexture);
 			
 			/* render */
 
