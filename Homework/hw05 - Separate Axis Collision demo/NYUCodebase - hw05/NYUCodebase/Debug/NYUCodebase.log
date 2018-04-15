@@ -1,0 +1,11 @@
+﻿  main_hw05.cpp
+c:\users\victo\desktop\intro to game programming cs3113\homework\hw05 - separate axis collision demo\nyucodebase - hw05\nyucodebase\main_hw05.cpp(155): warning C4018: '<': signed/unsigned mismatch
+c:\users\victo\desktop\intro to game programming cs3113\homework\hw05 - separate axis collision demo\nyucodebase - hw05\nyucodebase\main_hw05.cpp(162): warning C4018: '<': signed/unsigned mismatch
+c:\users\victo\desktop\intro to game programming cs3113\homework\hw05 - separate axis collision demo\nyucodebase - hw05\nyucodebase\main_hw05.cpp(163): warning C4018: '<': signed/unsigned mismatch
+c:\users\victo\desktop\intro to game programming cs3113\homework\hw05 - separate axis collision demo\nyucodebase - hw05\nyucodebase\main_hw05.cpp(171): warning C4018: '<': signed/unsigned mismatch
+c:\users\victo\desktop\intro to game programming cs3113\homework\hw05 - separate axis collision demo\nyucodebase - hw05\nyucodebase\main_hw05.cpp(177): warning C4018: '<': signed/unsigned mismatch
+c:\users\victo\desktop\intro to game programming cs3113\homework\hw05 - separate axis collision demo\nyucodebase - hw05\nyucodebase\main_hw05.cpp(182): warning C4018: '<': signed/unsigned mismatch
+c:\users\victo\desktop\intro to game programming cs3113\homework\hw05 - separate axis collision demo\nyucodebase - hw05\nyucodebase\main_hw05.cpp(205): warning C4018: '<': signed/unsigned mismatch
+c:\users\victo\desktop\intro to game programming cs3113\homework\hw05 - separate axis collision demo\nyucodebase - hw05\nyucodebase\main_hw05.cpp(213): warning C4244: 'argument': conversion from 'float' to 'int', possible loss of data
+c:\users\victo\desktop\intro to game programming cs3113\homework\hw05 - separate axis collision demo\nyucodebase - hw05\nyucodebase\main_hw05.cpp(220): warning C4244: 'argument': conversion from 'float' to 'GLsizei', possible loss of data
+  NYUCodebase.vcxproj -> C:\Users\victo\Desktop\Intro to game programming CS3113\Homework\hw05 - Separate Axis Collision demo\NYUCodebase - hw05\Debug\NYUCodebase.exe
