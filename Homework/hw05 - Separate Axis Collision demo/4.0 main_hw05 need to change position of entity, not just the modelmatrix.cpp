@@ -8,8 +8,7 @@ Debug fixes:
 1)objects were in constant collision, penetration fix makes them pushed farther and farther away from the center. Fix:
 2)entity rotate relative to player
 
-3)resolving collision with rectangle -- something wrong with it //maybe the
-4)do we have to keep track of the positions of the objects? Or only need to have it resolve during sat collision?
+3)resolving collision with rectangle -- something wrong with it
 
 */
 
@@ -95,7 +94,7 @@ public:
 		rotation = 0.0f;
 		rotationSpeed = 0.0f; translationSpeed = 0.0f;
 		rotateTime = false;
-		parentEntity = NULL;
+		revolve = false; relativeToPlayer = false;
 	};
 	//void Draw(ShaderProgram* program);
 	void Update(float elapsed);
@@ -115,15 +114,32 @@ public:
 	std::vector<float> color;//rgba
 	bool rotateTime;//rotation depends on time
 	float rotationSpeed; float translationSpeed;
+	bool revolve; bool relativeToPlayer;
 	float rotation;
 	Matrix modelMatrixMember;
-	Entity *parentEntity;
 };
 
 
 
 void Entity::Update(float elapsed) {
+	//velocity.x += acceleration.x * elapsed;
+	//velocity.y += acceleration.y * elapsed;
+	//speed limit
+	/*if (velocity.x > entityMaxVelocity) {
+		velocity.x = entityMaxVelocity;
+	}
+	else if (velocity.x < -entityMaxVelocity) {
+		velocity.x = -entityMaxVelocity;
+	}
+	if (velocity.y > entityMaxVelocity) {
+		velocity.y = entityMaxVelocity;
+	}
+	else if (velocity.y < -entityMaxVelocity) {
+		velocity.y = -entityMaxVelocity;
+	}
+	*/
 
+	//acceleration.x = 5.0f;//debug
 	position.x += velocity.x * elapsed;
 	position.y += velocity.y * elapsed;
 	
@@ -134,13 +150,8 @@ void Entity::Update(float elapsed) {
 
 void Entity::Render(ShaderProgram* program, float elapsed) {
 	//modelMatrixMember.Identity();
-	//if (revolve == true) {//rotate first then translate
-	//	modelMatrixMember = modelMatrixMember * parentEntity->modelMatrixMember; //comeback2
-	//}
-	modelMatrixMember.Identity();
-	if (parentEntity) {//if the object moves relative to the player then multiply the matrix to the parent's matrix
-		modelMatrixMember = modelMatrixMember * parentEntity->modelMatrixMember;
-		modelMatrixMember.Rotate(rotation);//revolve around player
+	if (revolve == true) {//rotate first then translate
+		modelMatrixMember.Rotate(rotation);
 	}
 	modelMatrixMember.Translate(position.x, position.y, position.z);
 	modelMatrixMember.Rotate(rotation);
@@ -232,49 +243,48 @@ void Update(GameState* game, float elapsed, Entity player) {
 
 	//check for objects colliding with each other
 	for (int i = 0; i < game->Object.size(); i++) {//object 1
-		for (int j = 0; j < game->Object.size(); j++) {//object 2 //could've checked starting from j=i+1
-			if (i != j) {
-				std::pair<float, float> penetration;
-				std::vector<std::pair<float, float>> e1Points;
-				std::vector<std::pair<float, float>> e2Points;
+		for (int j = i + 1; j < game->Object.size(); j++) {//object 2
+			std::pair<float, float> penetration;
+			std::vector<std::pair<float, float>> e1Points;
+			std::vector<std::pair<float, float>> e2Points;
 
-				for (int p = 0; p < game->Object[i].EntityVertices.size(); p++) {
-					Vector3 point = game->Object[i].modelMatrixMember * game->Object[i].EntityVertices[p];
-					e1Points.push_back(std::make_pair(point.x, point.y));
-				}
-				for (int p = 0; p < game->Object[j].EntityVertices.size(); p++) {
-					Vector3 point = game->Object[j].modelMatrixMember * game->Object[j].EntityVertices[p];
-					e2Points.push_back(std::make_pair(point.x, point.y));
-				}
+			for (int p = 0; p < game->Object[i].EntityVertices.size(); p++) {
+				Vector3 point = game->Object[i].modelMatrixMember * game->Object[i].EntityVertices[p];
+				e1Points.push_back(std::make_pair(point.x, point.y));
+			}
+			for (int p = 0; p < game->Object[j].EntityVertices.size(); p++) {
+				Vector3 point = game->Object[j].modelMatrixMember * game->Object[j].EntityVertices[p];
+				e2Points.push_back(std::make_pair(point.x, point.y));
+			}
 
-				bool collided = CheckSATCollision(e1Points, e2Points, penetration);
+			bool collided = CheckSATCollision(e1Points, e2Points, penetration);
 
-				if (collided) {
-					if (game->Object[i].parentEntity != NULL) {//the revolving objects don't get pushed, only the others
-						game->Object[j].position.x -= (penetration.first);
-						game->Object[j].position.y -= (penetration.second);
-						collided = false;
-					}
-					else {
-						game->Object[i].position.x += (penetration.first * 0.5f);
-						game->Object[i].position.y += (penetration.second * 0.5f);
+			if (collided) {
+				game->Object[i].position.x += (penetration.first * 0.5f);
+				game->Object[i].position.y += (penetration.second * 0.5f);
 
-						game->Object[j].position.x -= (penetration.first * 0.5f);
-						game->Object[j].position.y -= (penetration.second * 0.5f);
-						collided = false;
-					}
-
-				}
+				game->Object[j].position.x -= (penetration.first * 0.5f);
+				game->Object[j].position.y -= (penetration.second * 0.5f);
+				collided = false;
 			}
 		}
 	}
+
+
+
+
 	/* check for collision */
 }
 void Render(GameState* game, ShaderProgram* program, float elapsed) {
 	glClear(GL_COLOR_BUFFER_BIT);//create a full screen of the clear color (e.g. use this to cover up the objects previously rendered)
+	game->Player.modelMatrixMember.Identity();
 	game->Player.Render(program,elapsed);
 	for (int i = 0; i < game->Object.size(); i++) {
-		game->Object[i].Render(program,elapsed);//comeback this line causes crash
+		game->Object[i].modelMatrixMember.Identity();
+		if (game->Object[i].relativeToPlayer == true) {
+			game->Object[i].modelMatrixMember.Translate(game->Player.position.x, game->Player.position.y, game->Player.position.z);
+		}
+		game->Object[i].Render(program,elapsed);
 	}
 }
 
@@ -322,7 +332,7 @@ int main(int argc, char *argv[])
 		//game.Player.velocity.x = 0; game.Player.velocity.y = 0; game.Player.acceleration.x = 0; game.
 		/* Create Square play */
 
-		/* Create some Triangles that revolve around player */
+		/* Create some Triangles */
 		Entity triangle;
 		triangle.EntityTriangleVertices = {
 			-0.5f,-0.5f,
@@ -336,14 +346,14 @@ int main(int argc, char *argv[])
 		triangle.position.y = 2.0f;
 
 		triangle.rotateTime = true;
+		triangle.revolve = true; triangle.relativeToPlayer = true;
 		triangle.rotationSpeed = 2.0f;
 		triangle.translationSpeed = 2.0f;
-		triangle.parentEntity = &game.Player;
+
 		game.Object.push_back(triangle);
-		triangle.position.x -= 2.0f;
-		//triangle.modelMatrixMember.Translate(-2.0f, 0.0f, 0.0f);
+		triangle.modelMatrixMember.Translate(-5.0f, 0.0f, 0.0f);
 		game.Object.push_back(triangle);
-		/* Create some Triangles that revolve around player */
+		/* Create some Triangles */
 
 		/* Create Rectangle */
 		Entity rectangle;
@@ -403,16 +413,13 @@ int main(int argc, char *argv[])
 
 		game.Object.push_back(triangle2);
 
-		triangle2.position.x -= 2.0f;
-		//triangle2.modelMatrixMember.Translate(-2.0f, 0.0f, 0.0f);
+		triangle2.modelMatrixMember.Translate(-2.0f, 0.0f, 0.0f);
 		game.Object.push_back(triangle2);
 
-		triangle2.position.x -= 2.0f;
-		//triangle2.modelMatrixMember.Translate(-4.0f, 0.0f, 0.0f);
+		triangle2.modelMatrixMember.Translate(-4.0f, 0.0f, 0.0f);
 		game.Object.push_back(triangle2);
 
-		triangle2.position.x -= 2.0f;
-		//triangle2.modelMatrixMember.Translate(-6.0f, 0.0f, 0.0f);
+		triangle2.modelMatrixMember.Translate(-6.0f, 0.0f, 0.0f);
 		game.Object.push_back(triangle2);
 		/* Create multiple triangle2 */
 

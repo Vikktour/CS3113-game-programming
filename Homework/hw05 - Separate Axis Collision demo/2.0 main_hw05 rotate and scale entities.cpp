@@ -6,11 +6,6 @@ Controls: up down left right keys to move
 Debug fixes:
 0)Got rid of accleration aspect of the game for easier movement
 1)objects were in constant collision, penetration fix makes them pushed farther and farther away from the center. Fix:
-2)entity rotate relative to player
-
-3)resolving collision with rectangle -- something wrong with it //maybe the
-4)do we have to keep track of the positions of the objects? Or only need to have it resolve during sat collision?
-
 */
 
 
@@ -91,15 +86,10 @@ public:
 			color.push_back(0.0f);
 		}
 		color.push_back(1.0f);
-		//initialize rotation
-		rotation = 0.0f;
-		rotationSpeed = 0.0f; translationSpeed = 0.0f;
-		rotateTime = false;
-		parentEntity = NULL;
-	};
+	};//comeback
 	//void Draw(ShaderProgram* program);
 	void Update(float elapsed);
-	void Render(ShaderProgram* program, float elapsed);
+	void Render(ShaderProgram* program);
 	bool CollidesWith(Entity *entity);
 	Vector3 position;
 	Vector3 size;
@@ -113,37 +103,37 @@ public:
 	std::vector<float> EntityTriangleVertices;//vertices for draw
 	std::vector<std::pair<float,float>> EntityVertices;//without the repeated points from triangles
 	std::vector<float> color;//rgba
-	bool rotateTime;//rotation depends on time
-	float rotationSpeed; float translationSpeed;
-	float rotation;
 	Matrix modelMatrixMember;
-	Entity *parentEntity;
 };
 
 
 
 void Entity::Update(float elapsed) {
+	//velocity.x += acceleration.x * elapsed;
+	//velocity.y += acceleration.y * elapsed;
+	//speed limit
+	/*if (velocity.x > entityMaxVelocity) {
+		velocity.x = entityMaxVelocity;
+	}
+	else if (velocity.x < -entityMaxVelocity) {
+		velocity.x = -entityMaxVelocity;
+	}
+	if (velocity.y > entityMaxVelocity) {
+		velocity.y = entityMaxVelocity;
+	}
+	else if (velocity.y < -entityMaxVelocity) {
+		velocity.y = -entityMaxVelocity;
+	}
+	*/
 
+	//acceleration.x = 5.0f;//debug
 	position.x += velocity.x * elapsed;
 	position.y += velocity.y * elapsed;
-	
-	if (rotateTime == true) {
-		rotation += elapsed*rotationSpeed;
-	}
 }
 
-void Entity::Render(ShaderProgram* program, float elapsed) {
-	//modelMatrixMember.Identity();
-	//if (revolve == true) {//rotate first then translate
-	//	modelMatrixMember = modelMatrixMember * parentEntity->modelMatrixMember; //comeback2
-	//}
+void Entity::Render(ShaderProgram* program) {
 	modelMatrixMember.Identity();
-	if (parentEntity) {//if the object moves relative to the player then multiply the matrix to the parent's matrix
-		modelMatrixMember = modelMatrixMember * parentEntity->modelMatrixMember;
-		modelMatrixMember.Rotate(rotation);//revolve around player
-	}
 	modelMatrixMember.Translate(position.x, position.y, position.z);
-	modelMatrixMember.Rotate(rotation);
 	//untexturedProgram.SetColor(0.0f, 1.0f, 0.0f, 1.0f);
 	untexturedProgram.SetColor(color[0], color[1], color[2], color[3]);
 	untexturedProgram.SetModelMatrix(modelMatrixMember);
@@ -190,7 +180,7 @@ void ProcessInput(GameState* game) {
 	}
 }
 
-void Update(GameState* game, float elapsed, Entity player) {
+void Update(GameState* game, float elapsed) {
 	game->Player.Update(elapsed);
 	//game->Player.velocity.x = lerp(game->Player.velocity.x, 0.0f, elapsed*friction);
 	//game->Player.velocity.y = lerp(game->Player.velocity.y, 0.0f, elapsed*friction);
@@ -200,6 +190,14 @@ void Update(GameState* game, float elapsed, Entity player) {
 
 	/* Check for Collision */
 
+	//check for objects colliding with each other
+	for (int i = 0; i < game->Object.size(); i++) {//comeback
+		for (int j = i + 1; j < game->Object.size(); j++) {
+
+		}
+	}
+
+
 	//check for player colliding with other objects
 	//loop throught objects in the game to test for collision with player
 	for (int m = 0; m < game->Object.size(); m++) {
@@ -208,13 +206,13 @@ void Update(GameState* game, float elapsed, Entity player) {
 		std::vector<std::pair<float, float>> e2Points;// = game->Object[i].EntityVertices;
 
 
-		for (int p = 0; p < game->Player.EntityVertices.size(); p++) {
-			Vector3 point = game->Player.modelMatrixMember * game->Player.EntityVertices[p];
+		for (int i = 0; i < game->Player.EntityVertices.size(); i++) {
+			Vector3 point = game->Player.modelMatrixMember * game->Player.EntityVertices[i];
 			e1Points.push_back(std::make_pair(point.x, point.y));
 		}
 
-		for (int p = 0; p < game->Object[m].EntityVertices.size(); p++) {
-			Vector3 point = game->Object[m].modelMatrixMember * game->Object[m].EntityVertices[p];
+		for (int i = 0; i < game->Object[m].EntityVertices.size(); i++) {
+			Vector3 point = game->Object[m].modelMatrixMember * game->Object[m].EntityVertices[i];
 			e2Points.push_back(std::make_pair(point.x, point.y));
 		}
 
@@ -228,53 +226,16 @@ void Update(GameState* game, float elapsed, Entity player) {
 			game->Object[m].position.y -= (penetration.second * 0.5f);
 			collided = false;
 		}
+
 	}
 
-	//check for objects colliding with each other
-	for (int i = 0; i < game->Object.size(); i++) {//object 1
-		for (int j = 0; j < game->Object.size(); j++) {//object 2 //could've checked starting from j=i+1
-			if (i != j) {
-				std::pair<float, float> penetration;
-				std::vector<std::pair<float, float>> e1Points;
-				std::vector<std::pair<float, float>> e2Points;
-
-				for (int p = 0; p < game->Object[i].EntityVertices.size(); p++) {
-					Vector3 point = game->Object[i].modelMatrixMember * game->Object[i].EntityVertices[p];
-					e1Points.push_back(std::make_pair(point.x, point.y));
-				}
-				for (int p = 0; p < game->Object[j].EntityVertices.size(); p++) {
-					Vector3 point = game->Object[j].modelMatrixMember * game->Object[j].EntityVertices[p];
-					e2Points.push_back(std::make_pair(point.x, point.y));
-				}
-
-				bool collided = CheckSATCollision(e1Points, e2Points, penetration);
-
-				if (collided) {
-					if (game->Object[i].parentEntity != NULL) {//the revolving objects don't get pushed, only the others
-						game->Object[j].position.x -= (penetration.first);
-						game->Object[j].position.y -= (penetration.second);
-						collided = false;
-					}
-					else {
-						game->Object[i].position.x += (penetration.first * 0.5f);
-						game->Object[i].position.y += (penetration.second * 0.5f);
-
-						game->Object[j].position.x -= (penetration.first * 0.5f);
-						game->Object[j].position.y -= (penetration.second * 0.5f);
-						collided = false;
-					}
-
-				}
-			}
-		}
-	}
 	/* check for collision */
 }
-void Render(GameState* game, ShaderProgram* program, float elapsed) {
+void Render(GameState* game, ShaderProgram* program) {
 	glClear(GL_COLOR_BUFFER_BIT);//create a full screen of the clear color (e.g. use this to cover up the objects previously rendered)
-	game->Player.Render(program,elapsed);
+	game->Player.Render(program);
 	for (int i = 0; i < game->Object.size(); i++) {
-		game->Object[i].Render(program,elapsed);//comeback this line causes crash
+		game->Object[i].Render(program);
 	}
 }
 
@@ -322,7 +283,7 @@ int main(int argc, char *argv[])
 		//game.Player.velocity.x = 0; game.Player.velocity.y = 0; game.Player.acceleration.x = 0; game.
 		/* Create Square play */
 
-		/* Create some Triangles that revolve around player */
+		/* Create Triangle */
 		Entity triangle;
 		triangle.EntityTriangleVertices = {
 			-0.5f,-0.5f,
@@ -335,15 +296,8 @@ int main(int argc, char *argv[])
 		triangle.position.x = 2.0f;
 		triangle.position.y = 2.0f;
 
-		triangle.rotateTime = true;
-		triangle.rotationSpeed = 2.0f;
-		triangle.translationSpeed = 2.0f;
-		triangle.parentEntity = &game.Player;
 		game.Object.push_back(triangle);
-		triangle.position.x -= 2.0f;
-		//triangle.modelMatrixMember.Translate(-2.0f, 0.0f, 0.0f);
-		game.Object.push_back(triangle);
-		/* Create some Triangles that revolve around player */
+		/* Create Triangle */
 
 		/* Create Rectangle */
 		Entity rectangle;
@@ -364,57 +318,7 @@ int main(int argc, char *argv[])
 		game.Object.push_back(rectangle);
 		/* Create Rectangle */
 
-		/* Create Diamond */
-		Entity diamond;
-		diamond.EntityTriangleVertices = {//diamond
-			-0.5f,0.0f,
-			0.5f,0.0f,
-			0.0f,1.0f,
 
-			-0.5f,0.0f,
-			0.0f,-1.0f,
-			0.5f,0.0f
-		};
-		diamond.EntityVertices = {
-			{-0.5f,0.0f}, {0.0f,-1.0f}, {0.5f,0.0f}, {0.0f,1.0f}
-		};
-		diamond.position.x = leftScreen + 1.0f; diamond.position.y = 0.0f;
-		diamond.velocity.x = 2.0f;
-		diamond.rotation = 45.0f;
-		diamond.rotateTime = true; diamond.rotationSpeed = 5.0f;
-		game.Object.push_back(diamond);
-		/* Create Diamond */
-
-		/* Create multiple triangle2 */
-		Entity triangle2;
-		triangle2.EntityTriangleVertices = {
-			-0.5f,-0.5f,
-			0.5f,-0.5f,
-			0.0f,1.0f,
-		};
-		triangle2.EntityVertices = {
-			{ -0.5f,-0.5f },{ 0.5f, -0.5f },{ 0.0f,1.0f }
-		};
-		triangle2.position.x = 0.0f;
-		triangle2.position.y = 3.0f;
-
-		triangle2.rotateTime = true;
-		triangle2.rotationSpeed = 2.0f;
-
-		game.Object.push_back(triangle2);
-
-		triangle2.position.x -= 2.0f;
-		//triangle2.modelMatrixMember.Translate(-2.0f, 0.0f, 0.0f);
-		game.Object.push_back(triangle2);
-
-		triangle2.position.x -= 2.0f;
-		//triangle2.modelMatrixMember.Translate(-4.0f, 0.0f, 0.0f);
-		game.Object.push_back(triangle2);
-
-		triangle2.position.x -= 2.0f;
-		//triangle2.modelMatrixMember.Translate(-6.0f, 0.0f, 0.0f);
-		game.Object.push_back(triangle2);
-		/* Create multiple triangle2 */
 
 
 	SDL_Event event;
@@ -451,15 +355,51 @@ int main(int argc, char *argv[])
 			//viewMatrix.Translate(-game.Player.position.x, -game.Player.position.y, 0.0f);
 			//untexturedProgram.SetViewMatrix(viewMatrix);
 			ProcessInput(&game);
-			Update(&game, FIXED_TIMESTEP, game.Player);
+			Update(&game, FIXED_TIMESTEP);
 			//game.Player.position.x = 1.0f;//debug
-			Render(&game, &untexturedProgram, FIXED_TIMESTEP);
+			Render(&game, &untexturedProgram);
 
 			/* render */
 
 			elapsed -= FIXED_TIMESTEP;
 		}
 		accumulator = elapsed;
+
+
+		//Create hexagon
+		//modelMatrix.Identity();
+		////modelMatrix.Translate(3.0f, 1.0f, 0.0f);
+		////modelMatrix.Rotate(0.0f);
+		//untexturedProgram.SetColor(0.0f, 1.0f, 0.0f, 1.0f);
+		//untexturedProgram.SetModelMatrix(modelMatrix);
+		//float vertices[] = {//square
+		//	-1.0f, 1.0f,
+		//	-1.0f, -1.0f,
+		//	1.0f,-1.0f,
+		//	-1.0f,1.0f,
+		//	1.0f,-1.0f,
+		//	1.0f,1.0f
+		//};
+		////float vertices[] = {//diamond
+		////	-0.5f,0.0f,
+		////	0.5f,0.0f,
+		////	0.0f,1.0f,
+
+		////	-0.5f,0.0f,
+		////	0.0f,-1.0f,
+		////	0.5f,0.0f
+
+		////};
+
+		//glVertexAttribPointer(untexturedProgram.positionAttribute, 2, GL_FLOAT, false, 0, vertices);
+		//glEnableVertexAttribArray(untexturedProgram.positionAttribute);
+		//glUseProgram(untexturedProgram.programID);
+		//glDrawArrays(GL_TRIANGLES, 0, 6);
+		//glDisableVertexAttribArray(untexturedProgram.positionAttribute);
+		//square.Render(&untexturedProgram);
+
+
+
 
 		
 		SDL_GL_SwapWindow(displayWindow);
