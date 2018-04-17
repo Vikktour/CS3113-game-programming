@@ -8,8 +8,9 @@ Debug fixes:
 1)objects were in constant collision, penetration fix makes them pushed farther and farther away from the center. Fix:
 2)entity rotate relative to player
 
-3)resolving collision with rectangle -- something wrong with it //maybe the
+3)resolving collision with rectangle -- triangles seem to go through the rectangles
 4)do we have to keep track of the positions of the objects? Or only need to have it resolve during sat collision?
+5)When doing fix as -=penetration * 1.0f instead of both += and -=, the triangles end up trapped in the square
 
 */
 
@@ -221,12 +222,24 @@ void Update(GameState* game, float elapsed, Entity player) {
 		bool collided = CheckSATCollision(e1Points, e2Points, penetration);
 
 		if (collided) {
-			game->Player.position.x += (penetration.first * 0.5f);
-			game->Player.position.y += (penetration.second * 0.5f);
+			if (game->Object[m].parentEntity != NULL) {
+				//commented out because the triangles are relative to the square so moving the square would move the triangles anyways which is redundant.
+				//game->Player.position.x;// += (penetration.first * 0.5f);
+				//game->Player.position.y;// += (penetration.second * 0.5f);
 
-			game->Object[m].position.x -= (penetration.first * 0.5f);
-			game->Object[m].position.y -= (penetration.second * 0.5f);
-			collided = false;
+				game->Object[m].position.x -= (penetration.first);// *0.5f);
+				game->Object[m].position.y -= (penetration.second);// *0.5f);
+				collided = false;
+			}
+			else {
+				game->Player.position.x += (penetration.first * 0.5f);
+				game->Player.position.y += (penetration.second * 0.5f);
+
+				game->Object[m].position.x -= (penetration.first * 0.5f);
+				game->Object[m].position.y -= (penetration.second * 0.5f);
+				collided = false;
+			}
+
 		}
 	}
 
@@ -250,7 +263,7 @@ void Update(GameState* game, float elapsed, Entity player) {
 				bool collided = CheckSATCollision(e1Points, e2Points, penetration);
 
 				if (collided) {
-					if (game->Object[i].parentEntity != NULL) {//the revolving objects don't get pushed, only the others
+					if (game->Object[i].parentEntity != NULL) {//the revolving objects don't get pushed, only the others.
 						game->Object[j].position.x -= (penetration.first);
 						game->Object[j].position.y -= (penetration.second);
 						collided = false;
