@@ -7,10 +7,10 @@ Debug fixes:
 0)Got rid of accleration aspect of the game for easier movement
 1)objects were in constant collision, penetration fix makes them pushed farther and farther away from the center. Fix:
 2)entity rotate relative to player
+3)resolving collision with rectangle -- triangles seem to go through the rectangles. Fix: Got rid of the position updates for entities
+3.5)do we have to keep track of the positions of the objects? Or only need to have it resolve during sat collision?
 
-3)resolving collision with rectangle -- triangles seem to go through the rectangles
-4)do we have to keep track of the positions of the objects? Or only need to have it resolve during sat collision?
-5)When doing fix as -=penetration * 1.0f instead of both += and -=, the triangles end up trapped in the square
+5)When doing fix as -=penetration * 1.0f instead of both += and -=, the triangles end up trapped in the square. Fix: Change the order to: translate,rotate,scale to revolve. Don't do revolve translate revolve scale.
 
 */
 
