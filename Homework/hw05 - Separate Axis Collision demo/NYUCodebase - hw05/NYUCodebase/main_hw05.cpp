@@ -142,9 +142,14 @@ void Entity::Render(ShaderProgram* program, float elapsed) {
 	if (parentEntity) {//if the object moves relative to the player then multiply the matrix to the parent's matrix
 		modelMatrixMember = modelMatrixMember * parentEntity->modelMatrixMember;
 		modelMatrixMember.Rotate(rotation);//revolve around player
+		modelMatrixMember.Translate(position.x, position.y, position.z);
 	}
-	modelMatrixMember.Translate(position.x, position.y, position.z);
-	modelMatrixMember.Rotate(rotation);
+	else {
+		modelMatrixMember.Translate(position.x, position.y, position.z);
+		modelMatrixMember.Rotate(rotation);
+		modelMatrixMember.Scale(1.5f, 1.5f, 1.0f);
+	}
+
 	//untexturedProgram.SetColor(0.0f, 1.0f, 0.0f, 1.0f);
 	untexturedProgram.SetColor(color[0], color[1], color[2], color[3]);
 	untexturedProgram.SetModelMatrix(modelMatrixMember);
@@ -421,10 +426,12 @@ int main(int argc, char *argv[])
 		game.Object.push_back(triangle2);
 
 		triangle2.position.x -= 2.0f;
+		triangle2.velocity.x = -1.0f;
 		//triangle2.modelMatrixMember.Translate(-4.0f, 0.0f, 0.0f);
 		game.Object.push_back(triangle2);
 
 		triangle2.position.x -= 2.0f;
+		triangle2.velocity.x = 1.0f;
 		//triangle2.modelMatrixMember.Translate(-6.0f, 0.0f, 0.0f);
 		game.Object.push_back(triangle2);
 		/* Create multiple triangle2 */
@@ -460,8 +467,8 @@ int main(int argc, char *argv[])
 
 			untexturedProgram.SetViewMatrix(viewMatrix);
 			untexturedProgram.SetProjectionMatrix(projectionMatrix);
-			//viewMatrix.Identity();//comeback
-			//viewMatrix.Translate(-game.Player.position.x, -game.Player.position.y, 0.0f);
+			viewMatrix.Identity();//comeback
+			viewMatrix.Translate(-game.Player.position.x, -game.Player.position.y, 0.0f);
 			//untexturedProgram.SetViewMatrix(viewMatrix);
 			ProcessInput(&game);
 			Update(&game, FIXED_TIMESTEP, game.Player);
