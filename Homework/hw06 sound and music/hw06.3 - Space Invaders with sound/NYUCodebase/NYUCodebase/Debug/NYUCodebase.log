@@ -1,0 +1,7 @@
+﻿  main_hw03.cpp
+c:\users\victo\desktop\intro to game programming cs3113\homework\hw06.3 - space invaders with sound\nyucodebase\nyucodebase\main_hw03.cpp(224): warning C4244: 'argument': conversion from 'time_t' to 'unsigned int', possible loss of data
+c:\users\victo\desktop\intro to game programming cs3113\homework\hw06.3 - space invaders with sound\nyucodebase\nyucodebase\main_hw03.cpp(659): warning C4018: '<': signed/unsigned mismatch
+c:\users\victo\desktop\intro to game programming cs3113\homework\hw06.3 - space invaders with sound\nyucodebase\nyucodebase\main_hw03.cpp(702): warning C4244: 'argument': conversion from 'float' to 'int', possible loss of data
+c:\users\victo\desktop\intro to game programming cs3113\homework\hw06.3 - space invaders with sound\nyucodebase\nyucodebase\main_hw03.cpp(709): warning C4244: 'argument': conversion from 'float' to 'GLsizei', possible loss of data
+c:\users\victo\desktop\intro to game programming cs3113\homework\hw06.3 - space invaders with sound\nyucodebase\nyucodebase\main_hw03.cpp(191): warning C4172: returning address of local variable or temporary: retArray
+  NYUCodebase.vcxproj -> C:\Users\victo\Desktop\Intro to game programming CS3113\Homework\hw06.3 - Space Invaders with sound\NYUCodebase\Debug\NYUCodebase.exe
