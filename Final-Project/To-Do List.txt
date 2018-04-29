@@ -1,0 +1,7 @@
+Johnathan:
+Enemy AI
+menu, gameover screen
+
+Victor:
+Initializing Setup, player run animation and "shoot" waves. Boss appear animation.
+load a background image for each level.
