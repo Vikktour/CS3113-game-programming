@@ -1,0 +1,31 @@
+﻿  FlareMap.cpp
+c:\users\victor\desktop\0 leetcode\desktop\linkedin\google drive\fox dash (video game)\nyucodebase\nyucodebase\flaremap.cpp(101): warning C4244: '=': conversion from 'int' to 'float', possible loss of data
+c:\users\victor\desktop\0 leetcode\desktop\linkedin\google drive\fox dash (video game)\nyucodebase\nyucodebase\flaremap.cpp(102): warning C4244: '=': conversion from 'int' to 'float', possible loss of data
+  final_main.cpp
+c:\users\victor\desktop\0 leetcode\desktop\linkedin\google drive\fox dash (video game)\nyucodebase\nyucodebase\final_main.cpp(228): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+c:\users\victor\desktop\0 leetcode\desktop\linkedin\google drive\fox dash (video game)\nyucodebase\nyucodebase\final_main.cpp(229): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+c:\users\victor\desktop\0 leetcode\desktop\linkedin\google drive\fox dash (video game)\nyucodebase\nyucodebase\final_main.cpp(1436): warning C4305: '*=': truncation from 'double' to 'float'
+c:\users\victor\desktop\0 leetcode\desktop\linkedin\google drive\fox dash (video game)\nyucodebase\nyucodebase\final_main.cpp(1690): warning C4018: '<': signed/unsigned mismatch
+c:\users\victor\desktop\0 leetcode\desktop\linkedin\google drive\fox dash (video game)\nyucodebase\nyucodebase\final_main.cpp(1713): warning C4018: '<': signed/unsigned mismatch
+c:\users\victor\desktop\0 leetcode\desktop\linkedin\google drive\fox dash (video game)\nyucodebase\nyucodebase\final_main.cpp(1735): warning C4018: '<': signed/unsigned mismatch
+c:\users\victor\desktop\0 leetcode\desktop\linkedin\google drive\fox dash (video game)\nyucodebase\nyucodebase\final_main.cpp(1755): warning C4018: '<': signed/unsigned mismatch
+c:\users\victor\desktop\0 leetcode\desktop\linkedin\google drive\fox dash (video game)\nyucodebase\nyucodebase\final_main.cpp(1776): warning C4018: '<': signed/unsigned mismatch
+c:\users\victor\desktop\0 leetcode\desktop\linkedin\google drive\fox dash (video game)\nyucodebase\nyucodebase\final_main.cpp(2448): warning C4244: 'argument': conversion from 'float' to 'int', possible loss of data
+  Matrix.cpp
+c:\users\victor\desktop\0 leetcode\desktop\linkedin\google drive\fox dash (video game)\nyucodebase\nyucodebase\matrix.cpp(148): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+c:\users\victor\desktop\0 leetcode\desktop\linkedin\google drive\fox dash (video game)\nyucodebase\nyucodebase\matrix.cpp(149): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+c:\users\victor\desktop\0 leetcode\desktop\linkedin\google drive\fox dash (video game)\nyucodebase\nyucodebase\matrix.cpp(150): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+c:\users\victor\desktop\0 leetcode\desktop\linkedin\google drive\fox dash (video game)\nyucodebase\nyucodebase\matrix.cpp(151): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+c:\users\victor\desktop\0 leetcode\desktop\linkedin\google drive\fox dash (video game)\nyucodebase\nyucodebase\matrix.cpp(165): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+c:\users\victor\desktop\0 leetcode\desktop\linkedin\google drive\fox dash (video game)\nyucodebase\nyucodebase\matrix.cpp(166): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+c:\users\victor\desktop\0 leetcode\desktop\linkedin\google drive\fox dash (video game)\nyucodebase\nyucodebase\matrix.cpp(167): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+c:\users\victor\desktop\0 leetcode\desktop\linkedin\google drive\fox dash (video game)\nyucodebase\nyucodebase\matrix.cpp(168): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+c:\users\victor\desktop\0 leetcode\desktop\linkedin\google drive\fox dash (video game)\nyucodebase\nyucodebase\matrix.cpp(172): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+c:\users\victor\desktop\0 leetcode\desktop\linkedin\google drive\fox dash (video game)\nyucodebase\nyucodebase\matrix.cpp(173): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+c:\users\victor\desktop\0 leetcode\desktop\linkedin\google drive\fox dash (video game)\nyucodebase\nyucodebase\matrix.cpp(174): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+c:\users\victor\desktop\0 leetcode\desktop\linkedin\google drive\fox dash (video game)\nyucodebase\nyucodebase\matrix.cpp(175): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+c:\users\victor\desktop\0 leetcode\desktop\linkedin\google drive\fox dash (video game)\nyucodebase\nyucodebase\matrix.cpp(213): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+c:\users\victor\desktop\0 leetcode\desktop\linkedin\google drive\fox dash (video game)\nyucodebase\nyucodebase\matrix.cpp(214): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+  ShaderProgram.cpp
+  Generating Code...
+  NYUCodebase.vcxproj -> C:\Users\Victor\Desktop\0 Leetcode\Desktop\Linkedin\Google Drive\Fox Dash (Video Game)\NYUCodebase\Debug\NYUCodebase.exe
