@@ -8,3 +8,7 @@ Running from Visual Studio:
 1) Visual Studio settings: 
 	Project > Properties > Windows SDK --> 8.1
 2) Ctrl + F5 to run code
+
+
+Gameplay Demo:
+https://youtu.be/LBZMCTczodw
